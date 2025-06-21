@@ -1,0 +1,37 @@
+{% load static %}
+<div class="skill-grid">
+    {% for skill in skills %}
+    <div class="skill-item skill-expert" data-skill-id="{{ skill.id }}">
+        <div class="skill-header">
+            <div class="skill-title-wrapper">
+                <div class="skill-icon">
+                    <i class="bi bi-code-slash"></i>
+                </div>
+                <h6 class="skill-title">{{ skill.name }}</h6>
+            </div>
+            <div class="skill-actions">
+                <button type="button" class="btn btn-sm btn-outline-primary edit-skill" data-skill-id="{{ skill.id }}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger delete-skill" data-skill-id="{{ skill.id }}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="skill-meta">
+            <div class="skill-progress-wrapper">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 90%" 
+                         aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+            <span class="skill-percentage">90%</span>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-4">
+        <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
+        <p class="text-muted mt-2">No skills added yet. Click 'Add Skill' to get started.</p>
+    </div>
+    {% endfor %}
+</div>

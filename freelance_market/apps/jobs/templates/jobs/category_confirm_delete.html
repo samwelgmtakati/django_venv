@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Category{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h2 class="h5 mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Delete Category
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p>Are you sure you want to delete the category <strong>"{{ object.name }}"</strong>?</p>
+                    
+                    {% if object.jobs.exists %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong>Warning:</strong> This category has {{ object.jobs.count }} job{{ object.jobs.count|pluralize }} associated with it.
+                            Deleting this category will remove these associations.
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'jobs:category_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash me-1"></i> Delete Category
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

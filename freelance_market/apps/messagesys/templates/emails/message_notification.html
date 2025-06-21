@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You have {{ total_unread }} unread message{{ total_unread|pluralize }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+        .logo {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+        .message-preview {
+            background-color: #f9f9f9;
+            border-left: 4px solid #4a90e2;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .message-meta {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .message-sender {
+            font-weight: bold;
+            color: #333;
+        }
+        .message-time {
+            color: #999;
+            font-size: 12px;
+        }
+        .message-body {
+            margin: 10px 0;
+            color: #444;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4a90e2;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+        }
+        .thread {
+            margin-bottom: 25px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .thread-header {
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .thread-title {
+            font-weight: bold;
+            margin: 0;
+        }
+        .thread-meta {
+            font-size: 12px;
+            color: #777;
+            margin-top: 5px;
+        }
+        .more-messages {
+            font-size: 13px;
+            color: #777;
+            font-style: italic;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>You have {{ total_unread }} unread message{{ total_unread|pluralize }}</h1>
+    </div>
+
+    <p>Hello {{ user.get_full_name|default:user.username }},</p>
+    <p>You have <strong>{{ total_unread }} unread message{{ total_unread|pluralize }}</strong> in your {{ site.name }} inbox.</p>
+
+    {% for thread_info in unread_threads %}
+    <div class="thread">
+        <div class="thread-header">
+            <div class="thread-title">{{ thread_info.thread.subject|default:"(No subject)" }}</div>
+            <div class="thread-meta">
+                Conversation with {{ thread_info.messages.0.sender.get_full_name|default:thread_info.messages.0.sender.username }}
+            </div>
+        </div>
+        <div class="message-preview">
+            {% for message in thread_info.messages|slice:":3" %}
+            <div class="message">
+                <div class="message-meta">
+                    <span class="message-sender">{{ message.sender.get_full_name|default:message.sender.username }}</span>
+                    <span class="message-time">on {{ message.sent_at|date:"M j, Y g:i A" }}</span>
+                </div>
+                <div class="message-body">
+                    {{ message.body|truncatewords:50|linebreaksbr }}
+                </div>
+            </div>
+            {% if not forloop.last %}<hr style="border: none; border-top: 1px solid #eee; margin: 15px 0;">{% endif %}
+            {% endfor %}
+            
+            {% if thread_info.count > 3 %}
+            <div class="more-messages">
+                ... and {{ thread_info.count|add:"-3" }} more message{{ thread_info.count|add:"-3"|pluralize }} in this conversation
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: 15px;">
+                <a href="https://{{ site.domain }}{{ thread_info.thread.get_absolute_url }}" class="btn">
+                    View Conversation
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="https://{{ site.domain }}{% url 'messages:inbox' %}" class="btn" style="background-color: #2c5282;">
+            View All Messages
+        </a>
+    </div>
+
+    <div class="footer">
+        <p>You're receiving this email because you have unread messages in your {{ site.name }} account.</p>
+        <p>&copy; {% now "Y" %} {{ site.name }}. All rights reserved.</p>
+    </div>
+</body>
+</html>

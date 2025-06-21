@@ -1,0 +1,305 @@
+{% extends "dashboard/base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Leave a Review" %}{% endblock title %}
+
+{% block extra_css %}
+<style>
+/* Form styling */
+.review-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.star-rating {
+    direction: rtl;
+    font-size: 2.5rem;
+    text-align: center;
+    margin: 1.5rem 0 2.5rem;
+    unicode-bidi: bidi-override;
+}
+
+.star-rating input[type="radio"] {
+    display: none;
+}
+
+.star-rating label {
+    color: #e0e0e0;
+    cursor: pointer;
+    padding: 0 8px;
+    transition: color 0.2s, transform 0.1s;
+    display: inline-block;
+}
+
+.star-rating label:hover,
+.star-rating label:hover ~ label,
+.star-rating input[type="radio"]:checked ~ label {
+    color: #ffc107;
+}
+
+.star-rating input[type="radio"]:checked + label {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+.star-rating label:hover {
+    transform: scale(1.2);
+}
+
+.form-group {
+    margin-bottom: 2rem;
+}
+
+#id_comment {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.rating-label {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    display: block;
+    text-align: center;
+}
+
+.help-text {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.review-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.review-header h4 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.review-header p.lead {
+    color: #4a5568;
+    font-size: 1.15rem;
+    margin-bottom: 0;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+@media (max-width: 576px) {
+    .review-container {
+        padding: 1.25rem;
+    }
+    
+    .star-rating {
+        font-size: 2rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="review-container">
+                        <div id="review-alerts"></div>
+                        <div class="review-header">
+                            <h4>{% trans "Share Your Experience" %}</h4>
+                            <p class="lead">
+                                {% if order.client == request.user %}
+                                    {% blocktrans with freelancer_name=order.freelancer.get_full_name|default:order.freelancer.username order_id=order.id %}
+                                        How was your experience working with {{ freelancer_name }} on Order #{{ order_id }}?
+                                    {% endblocktrans %}
+                                {% else %}
+                                    {% blocktrans with client_name=order.client.get_full_name|default:order.client.username order_id=order.id %}
+                                        How was your experience working with {{ client_name }} on Order #{{ order_id }}?
+                                    {% endblocktrans %}
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <form method="post" class="review-form" id="review-form" data-order-id="{{ order.id }}">
+                            {% csrf_token %}
+                            
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {% for error in form.non_field_errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Hidden rating input -->
+                            <input type="hidden" name="rating" id="rating-value" value="{{ form.rating.value|default:'5' }}">
+                            
+                            <div class="form-group text-center">
+                                <label for="rating-value" class="rating-label">
+                                    {% trans "How would you rate this experience?" %}
+                                </label>
+                                
+                                <div class="star-rating">
+                                    {% for i in "54321" %}
+                                        <input type="radio" id="star{{ i }}" name="rating-radio" value="{{ i }}" 
+                                               {% if form.rating.value == i or forloop.first and not form.rating.value %}checked{% endif %}>
+                                        <label for="star{{ i }}" title="{{ i }} stars">
+                                            <i class="bi bi-star-fill"></i>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mt-2">
+                                    <span id="rating-text" class="fw-bold">
+                                        {{ form.get_rating_display|default:"Excellent (5/5)" }}
+                                    </span>
+                                </div>
+                                
+                                {% if form.rating.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.rating.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="id_comment" class="form-label">
+                                    <strong>{% trans "Your Review" %}</strong>
+                                    <span class="text-muted">({% trans "Optional" %})</span>
+                                </label>
+                                {{ form.comment }}
+                                {% if form.comment.help_text %}
+                                    <div class="help-text">{{ form.comment.help_text }}</div>
+                                {% endif %}
+                                {% if form.comment.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.comment.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-actions">
+                                <a href="{% url "orders:detail" pk=order.id %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-2"></i>{% trans "Back to Order" %}
+                                </a>
+                                <button type="submit" class="btn btn-primary px-4 py-2" id="submit-review">
+                                    <i class="bi bi-send-fill me-2"></i>{% trans "Submit Review" %}
+                                    <span id="submit-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ratingInput = document.getElementById('rating-value');
+        const ratingText = document.getElementById('rating-text');
+        const ratingRadios = document.querySelectorAll('input[name="rating-radio"]');
+        const reviewForm = document.getElementById('review-form');
+        const submitBtn = document.getElementById('submit-review');
+        const submitSpinner = document.getElementById('submit-spinner');
+        const reviewAlerts = document.getElementById('review-alerts');
+        
+        // Rating descriptions
+        const ratingDescriptions = {
+            '1': '{% trans "Poor (1/5)" %}',
+            '2': '{% trans "Fair (2/5)" %}',
+            '3': '{% trans "Good (3/5)" %}',
+            '4': '{% trans "Very Good (4/5)" %}',
+            '5': '{% trans "Excellent (5/5)" %}',
+        };
+        
+        // Update rating display when a star is clicked
+        ratingRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                const value = this.value;
+                ratingInput.value = value;
+                ratingText.textContent = ratingDescriptions[value];
+            });
+            
+            // Add hover effect
+            radio.addEventListener('mouseover', function() {
+                const value = this.value;
+                ratingText.textContent = ratingDescriptions[value];
+            });
+            
+            // Reset to selected value on mouseout
+            radio.addEventListener('mouseout', function() {
+                const selectedValue = document.querySelector('input[name="rating-radio"]:checked').value;
+                ratingText.textContent = ratingDescriptions[selectedValue];
+            });
+        ratingText.textContent = ratingTexts[selectedValue];
+    }
+    
+    // Initialize stars based on current value
+    updateStars(ratingInput.value);
+    
+    // Add click event to star labels
+    starLabels.forEach(label => {
+        label.addEventListener('click', (e) => {
+            const value = e.currentTarget.getAttribute('data-value');
+            updateStars(value);
+        });
+        
+        // Hover effect
+        label.addEventListener('mouseenter', (e) => {
+            const hoverValue = e.currentTarget.getAttribute('data-value');
+            starLabels.forEach(star => {
+                const value = star.getAttribute('data-value');
+                if (value <= hoverValue) {
+                    star.style.color = '#ffc107';
+                } else {
+                    star.style.color = '#e0e0e0';
+                }
+            });
+        });
+    });
+    
+    // Reset to selected state when mouse leaves the rating container
+    const starRating = document.querySelector('.star-rating');
+    starRating.addEventListener('mouseleave', () => {
+        updateStars(ratingInput.value);
+    });
+    
+    // Form validation
+    const form = document.getElementById('review-form');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    }, false);
+});
+</script>
+{% endblock extra_js %}

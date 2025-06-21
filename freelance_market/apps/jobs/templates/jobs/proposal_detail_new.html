@@ -1,0 +1,650 @@
+{% extends "dashboard/base.html" %}
+{% load static humanize file_filters %}
+
+{% block title %}Proposal from {{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}{% endblock title %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/proposal_detail.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.css" />
+<style>
+    /* Dropzone styles */
+    .dropzone {
+        border: 2px dashed #dee2e6;
+        border-radius: 6px;
+        background: #f8f9fa;
+        min-height: 120px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .dropzone:hover, .dropzone.dz-drag-hover {
+        border-color: #4e73df;
+        background-color: #f1f5ff;
+    }
+    
+    .dropzone .dz-message {
+        margin: 2em 0;
+        color: #6c757d;
+    }
+    
+    .dropzone .dz-preview {
+        margin: 10px;
+    }
+    
+    .dropzone .dz-preview .dz-progress {
+        height: 10px;
+        border-radius: 5px;
+    }
+    
+    .dropzone .dz-preview .dz-remove {
+        color: #dc3545;
+        text-decoration: none;
+        margin-top: 5px;
+        display: inline-block;
+    }
+    
+    .dropzone .dz-preview .dz-remove:hover {
+        text-decoration: underline;
+    }
+    
+    /* File type colors */
+    .fa-file-pdf { color: #e74c3c; }
+    .fa-file-word { color: #2c7be5; }
+    .fa-file-excel { color: #27ae60; }
+    .fa-file-powerpoint { color: #e67e22; }
+    .fa-file-image { color: #9b59b6; }
+    .fa-file-archive { color: #7f8c8d; }
+    .fa-file-audio { color: #3498db; }
+    .fa-file-video { color: #e74c3c; }
+    .fa-file-code { color: #2c3e50; }
+    .fa-file-alt { color: #95a5a6; }
+    .fa-file { color: #7f8c8d; }
+    
+    /* Hover effects for list items */
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* Truncate text with ellipsis */
+    .text-truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Preview image in modal */
+    #previewImage {
+        max-height: 70vh;
+        width: auto;
+        max-width: 100%;
+        margin: 0 auto;
+        display: block;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .btn-group .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .list-group-item {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Back Button -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard:client_proposals' %}">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Back to Proposals
+                </a>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1 class="h3 mb-2">Proposal for: {{ proposal.job.title }}</h1>
+                    <p class="text-muted mb-0">
+                        Submitted {{ proposal.created_at|naturaltime }}
+                        {% if proposal.updated_at and proposal.updated_at != proposal.created_at %}
+                            • Updated {{ proposal.updated_at|naturaltime }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="d-flex flex-column align-items-end">
+                    <div class="row g-3 mb-2 text-center">
+                        <div class="col-auto">
+                            <span class="badge rounded-pill bg-light text-dark border">
+                                <i class="fas fa-money-bill-wave me-1 text-success"></i>
+                                TZS {{ proposal.bid_amount|floatformat:0 }}
+                            </span>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge rounded-pill bg-light text-dark border">
+                                <i class="fas fa-clock me-1 text-primary"></i>
+                                {{ proposal.estimated_days }} days
+                            </span>
+                        </div>
+                    </div>
+                    <span class="badge status-{{ proposal.status }} mb-2">
+                        {{ proposal.get_status_display }}
+                    </span>
+                    {% if proposal.responded_at %}
+                        <small class="text-muted">
+                            {{ proposal.get_status_display }} on {{ proposal.responded_at|date:"M j, Y" }}
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Freelancer Profile -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            {% if proposal.freelancer.profile_photo %}
+                                <img src="{{ proposal.freelancer.profile_photo.url }}" 
+                                     alt="{{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}"
+                                     class="rounded-circle" width="80" height="80">
+                            {% else %}
+                                <div class="avatar-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h2 class="h5 mb-1">
+                                {{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}
+                                {% if proposal.freelancer.verification_status == 'verified' %}
+                                    <i class="fas fa-check-circle text-primary" data-bs-toggle="tooltip" title="Verified Freelancer"></i>
+                                {% endif %}
+                            </h2>
+                            {% if proposal.freelancer.profile_title %}
+                                <p class="text-muted mb-2">{{ proposal.freelancer.profile_title }}</p>
+                            {% endif %}
+                            <div class="freelancer-meta">
+                                <span class="me-3">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    {{ proposal.freelancer.profile.country|default:"Location not specified" }}
+                                </span>
+                                <span>
+                                    <i class="fas fa-star text-warning me-1"></i>
+                                    {{ proposal.freelancer.average_rating|default:"No" }} rating
+                                    {% if proposal.freelancer.total_reviews %}
+                                        ({{ proposal.freelancer.total_reviews }} reviews)
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cover Letter -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">Cover Letter</h3>
+                </div>
+                <div class="card-body">
+                    <div class="proposal-content">
+                        {{ proposal.cover_letter|linebreaks|urlize }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attachments -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-paperclip me-2"></i>Attachments 
+                        <span class="badge bg-secondary ms-1 attachment-count">{{ proposal.attachments.count }}</span>
+                    </h3>
+                    {% if proposal.attachments.exists %}
+                    <span class="text-muted small">
+                        Total size: {{ proposal.get_total_attachment_size|format_filesize }}
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    {% if proposal.attachments.exists %}
+                        <div class="list-group list-group-flush">
+                            {% for attachment in proposal.attachments.all %}
+                                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3">
+                                    <div class="d-flex align-items-center flex-grow-1">
+                                        <i class="{{ attachment.original_filename|file_icon }} me-3" style="font-size: 1.5rem; min-width: 24px; text-align: center;"></i>
+                                        <div class="text-truncate">
+                                            <h6 class="mb-0 text-truncate" title="{{ attachment.original_filename }}">
+                                                {{ attachment.original_filename|truncatechars:40 }}
+                                            </h6>
+                                            <small class="text-muted">
+                                                {{ attachment.original_filename|file_type }} • 
+                                                {{ attachment.file_size|format_filesize }}
+                                                {% if attachment.original_filename|is_image %}
+                                                    • <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#imagePreviewModal" 
+                                                       data-image-url="{{ attachment.file.url }}" data-image-name="{{ attachment.original_filename }}">
+                                                        Preview
+                                                    </a>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'jobs:download_attachment' attachment.id %}" class="btn btn-sm btn-outline-primary" download>
+                                            <i class="fas fa-download"></i>
+                                            <span class="d-none d-md-inline ms-1">Download</span>
+                                        </a>
+                                        {% if request.user == proposal.freelancer and proposal.status == 'pending' %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                data-bs-toggle="modal" data-bs-target="#deleteAttachmentModal" 
+                                                data-attachment-id="{{ attachment.id }}" data-attachment-name="{{ attachment.original_filename }}">
+                                            <i class="fas fa-trash"></i>
+                                            <span class="d-none d-md-inline ms-1">Delete</span>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Similar Proposals (for clients) -->
+            {% if request.user == proposal.job.client and similar_proposals %}
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="h5 mb-0">Similar Proposals</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for similar in similar_proposals|slice:":3" %}
+                                <a href="{% url 'jobs:proposal_detail' pk=similar.id %}" 
+                                   class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ similar.freelancer.get_full_name|default:similar.freelancer.username }}</h6>
+                                        <small class="text-muted">TZS {{ similar.bid_amount|floatformat:2 }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ similar.cover_letter|truncatewords:20 }}</p>
+                                    <small class="text-muted">
+                                        <i class="far fa-clock me-1"></i> {{ similar.created_at|naturaltime }}
+                                    </small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Actions Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">Actions</h3>
+                </div>
+                <div class="card-body">
+                    {% if request.user == proposal.job.client %}
+                        <!-- Client Actions -->
+                        {% if proposal.status == 'pending' %}
+                            <form method="post" action="{% url 'jobs:accept_proposal' job_slug=proposal.job.slug pk=proposal.pk %}" class="mb-3">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success w-100 mb-2">
+                                    <i class="fas fa-check-circle me-1"></i> Accept Proposal
+                                </button>
+                                <p class="small text-muted mb-0">
+                                    Accepting this proposal will notify the freelancer and close this job to new proposals.
+                                </p>
+                            </form>
+                            
+                            <button type="button" class="btn btn-outline-danger w-100 mb-3" data-bs-toggle="modal" data-bs-target="#rejectProposalModal">
+                                <i class="fas fa-times-circle me-1"></i> Reject Proposal
+                            </button>
+                            
+                            <a href="#proposal.freelancer.id %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-comment-dots me-1"></i> Message Freelancer
+                            </a>
+                            
+                        {% elif proposal.status == 'accepted' %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                You've accepted this proposal on {{ proposal.responded_at|date:"M j, Y" }}.
+                            </div>
+                            <a href="#proposal.freelancer.id %}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-comment-dots me-1"></i> Message {{ proposal.freelancer.get_short_name }}
+                            </a>
+                            <a href="#" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-file-contract me-1"></i> View Contract
+                            </a>
+                        {% endif %}
+                        
+                    {% elif request.user == proposal.freelancer %}
+                        <!-- Freelancer Actions -->
+                        {% if proposal.status == 'pending' %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Your proposal is under review by the client.
+                            </div>
+                            <a href="#proposal.job.client.id %}" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-comment-dots me-1"></i> Message Client
+                            </a>
+                            <a href="#" class="btn btn-outline-secondary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#withdrawProposalModal">
+                                <i class="fas fa-undo me-1"></i> Withdraw Proposal
+                            </a>
+                            
+                        {% elif proposal.status == 'accepted' %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Your proposal was accepted on {{ proposal.responded_at|date:"M j, Y" }}.
+                            </div>
+                            <a href="#proposal.job.client.id %}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-comment-dots me-1"></i> Message Client
+                            </a>
+                            <a href="{% url 'jobs:job_detail' slug=proposal.job.slug %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-briefcase me-1"></i> View Job Details
+                            </a>
+                            
+                        {% elif proposal.status == 'rejected' %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                This proposal was not selected by the client.
+                            </div>
+                            <a href="{% url 'jobs:job_detail' slug=proposal.job.slug %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-search me-1"></i> Find Similar Jobs
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Proposal Details -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">Proposal Details</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Status</span>
+                            <span class="fw-medium">
+                                <span class="badge status-{{ proposal.status }}">
+                                    {{ proposal.get_status_display }}
+                                </span>
+                            </span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Submitted</span>
+                            <span class="fw-medium">{{ proposal.created_at|date:"M j, Y" }}</span>
+                        </li>
+                        {% if proposal.responded_at %}
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">{{ proposal.get_status_display }} On</span>
+                                <span class="fw-medium">{{ proposal.responded_at|date:"M j, Y" }}</span>
+                            </li>
+                        {% endif %}
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Bid Amount</span>
+                            <span class="fw-medium">TZS {{ proposal.bid_amount|floatformat:2 }}</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Delivery Time</span>
+                            <span class="fw-medium">{{ proposal.estimated_days }} days</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2">
+                            <span class="text-muted">Job Type</span>
+                            <span class="fw-medium">{{ proposal.job.get_job_type_display }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Job Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">Job Summary</h3>
+                </div>
+                <div class="card-body">
+                    <h4 class="h6 mb-3">{{ proposal.job.title }}</h4>
+                    <p class="small text-muted">
+                        {{ proposal.job.description|truncatewords:30 }}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <a href="{% url 'jobs:job_detail' slug=proposal.job.slug %}" class="btn btn-sm btn-outline-primary">
+                            View Job Details
+                        </a>
+                        <small class="text-muted">
+                            Posted {{ proposal.job.created_at|naturaltime }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Attachment Confirmation Modal -->
+<div class="modal fade" id="deleteAttachmentModal" tabindex="-1" aria-labelledby="deleteAttachmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteAttachmentModalLabel">Delete Attachment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be dynamically inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Proposal Modal -->
+<div class="modal fade" id="rejectProposalModal" tabindex="-1" aria-labelledby="rejectProposalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectProposalModalLabel">Reject Proposal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'jobs:reject_proposal' job_slug=proposal.job.slug pk=proposal.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Are you sure you want to reject this proposal? This action cannot be undone.</p>
+                    <div class="mb-3">
+                        <label for="rejectionReason" class="form-label">Reason for rejection (optional):</label>
+                        <textarea class="form-control" id="rejectionReason" name="rejection_reason" rows="3" 
+                                 placeholder="Provide feedback to help the freelancer improve (optional)"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Proposal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Withdraw Proposal Modal -->
+<div class="modal fade" id="withdrawProposalModal" tabindex="-1" aria-labelledby="withdrawProposalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="withdrawProposalModalLabel">Withdraw Proposal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'jobs:withdraw_proposal' pk=proposal.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Are you sure you want to withdraw your proposal? This action cannot be undone.</p>
+                    <div class="mb-3">
+                        <label for="withdrawReason" class="form-label">Reason for withdrawal (optional):</label>
+                        <textarea class="form-control" id="withdrawReason" name="withdraw_reason" rows="3" 
+                                 placeholder="Let the client know why you're withdrawing (optional)"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Withdraw Proposal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+<script>
+    // Initialize Dropzone
+    Dropzone.autoDiscover = false;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize any tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Initialize any popovers
+        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+        var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl);
+        });
+        
+        // Handle delete attachment modal
+        const deleteAttachmentModal = document.getElementById('deleteAttachmentModal');
+        if (deleteAttachmentModal) {
+            deleteAttachmentModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const attachmentId = button.getAttribute('data-attachment-id');
+                const attachmentName = button.getAttribute('data-attachment-name');
+                
+                // Update the modal content
+                const modalTitle = deleteAttachmentModal.querySelector('.modal-title');
+                const modalBody = deleteAttachmentModal.querySelector('.modal-body');
+                const deleteForm = deleteAttachmentModal.querySelector('form');
+                
+                modalTitle.textContent = 'Delete Attachment';
+                modalBody.innerHTML = `
+                    <p>Are you sure you want to delete the file <strong>${attachmentName}</strong>? This action cannot be undone.</p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        The client will be notified of this deletion.
+                    </div>
+                `;
+                
+                // Update the form action URL
+                deleteForm.action = `/jobs/attachments/${attachmentId}/delete/`;
+                
+                // Handle form submission
+                deleteForm.onsubmit = function(e) {
+                    e.preventDefault();
+                    
+                    // Show loading state
+                    const submitBtn = deleteForm.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.innerHTML;
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Deleting...';
+                    
+                    // Send AJAX request
+                    fetch(deleteForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close the modal
+                            const modal = bootstrap.Modal.getInstance(deleteAttachmentModal);
+                            modal.hide();
+                            
+                            // Remove the attachment from the UI
+                            const attachmentElement = document.querySelector(`[data-attachment-id="${attachmentId}"]`).closest('.list-group-item');
+                            if (attachmentElement) {
+                                attachmentElement.remove();
+                                
+                                // Update the attachment count
+                                const attachmentCount = document.querySelectorAll('.list-group-item').length;
+                                const attachmentBadge = document.querySelector('.attachment-count');
+                                if (attachmentBadge) {
+                                    attachmentBadge.textContent = attachmentCount;
+                                }
+                                
+                                // Show success message
+                                showAlert('success', 'Attachment deleted successfully.');
+                            }
+                        } else {
+                            throw new Error(data.message || 'Failed to delete attachment');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('danger', error.message || 'An error occurred while deleting the attachment.');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                    });
+                };
+            });
+        }
+        
+        // Show alert message
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.role = 'alert';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // Add to the alerts container or create one
+            let alertsContainer = document.getElementById('alerts-container');
+            if (!alertsContainer) {
+                alertsContainer = document.createElement('div');
+                alertsContainer.id = 'alerts-container';
+                document.querySelector('main').prepend(alertsContainer);
+            }
+            
+            alertsContainer.appendChild(alertDiv);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertDiv);
+                bsAlert.close();
+            }, 5000);
+        }
+    });
+</script>
+{% endblock extra_js %}

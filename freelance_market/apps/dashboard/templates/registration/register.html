@@ -1,0 +1,189 @@
+{% extends "dashboard/base_simple.html" %}
+{% load static %}
+{% block title %}
+    Register - Freelance Market
+{% endblock title %}
+{% block extra_css %}
+    {{ block.super }}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet"
+          href="{% static 'dashboard/css/register-clean.css' %}">
+{% endblock extra_css %}
+{% block body_attrs %}
+    class="register-page"
+{% endblock body_attrs %}
+{% block content %}
+    <div class="register-container">
+        <!-- Left Side - Illustration -->
+        <div class="register-illustration">
+            <div class="home-nav">
+                <a href="{% url 'home:home_page' %}" class="home-link-illustration">
+                    <i class="bi bi-house-door"></i>
+                </a>
+                <a href="{% url 'home:home_page' %}" class="back-home-btn">
+                    <i class="bi bi-arrow-left"></i> Back to Home
+                </a>
+            </div>
+            <div class="illustration-content">
+                <h1>Join Our Community</h1>
+                <p>Create your account and start your freelance journey today</p>
+                <img src="https://assets3.lottiefiles.com/packages/lf20_iluj9d9w.json"
+                     alt="Register Illustration"
+                     class="illustration-img"
+                     width="400"
+                     height="300">
+                <div class="mt-4">
+                    <p class="small">Already have an account?</p>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light">Sign In</a>
+                </div>
+            </div>
+        </div>
+        <!-- Right Side - Registration Form -->
+        <div class="register-form-container">
+            <div class="register-header">
+                <h2>Create Account</h2>
+                <p>Fill in your details to get started</p>
+            </div>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                         role="alert">
+                        {{ message }}
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <form method="post"
+                  class="register-form"
+                  novalidate
+                  style="width: 100%;
+                         max-width: 350px;
+                         margin: 0 auto">
+                {% csrf_token %}
+                {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+                <div class="form-group">
+                    <i class="bi bi-person input-icon"></i>
+                    <input type="text"
+                           name="first_name"
+                           class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+                           id="id_first_name"
+                           placeholder="First name"
+                           value="{{ form.first_name.value|default:'' }}"
+                           required>
+                    {% if form.first_name.errors %}<div class="invalid-feedback">{{ form.first_name.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <i class="bi bi-person input-icon"></i>
+                    <input type="text"
+                           name="last_name"
+                           class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+                           id="id_last_name"
+                           placeholder="Last name"
+                           value="{{ form.last_name.value|default:'' }}"
+                           required>
+                    {% if form.last_name.errors %}<div class="invalid-feedback">{{ form.last_name.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <i class="bi bi-envelope input-icon"></i>
+                    <input type="email"
+                           name="email"
+                           class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+                           id="id_email"
+                           placeholder="Email address"
+                           value="{{ form.email.value|default:'' }}"
+                           required>
+                    {% if form.email.errors %}<div class="invalid-feedback">{{ form.email.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <i class="bi bi-person-badge input-icon"></i>
+                    <input type="text"
+                           name="username"
+                           class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                           id="id_username"
+                           placeholder="Username"
+                           value="{{ form.username.value|default:'' }}"
+                           required>
+                    {% if form.username.errors %}<div class="invalid-feedback">{{ form.username.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <i class="bi bi-lock input-icon"></i>
+                    <input type="password"
+                           name="password1"
+                           class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                           id="id_password1"
+                           placeholder="Password"
+                           required>
+                    <i class="bi bi-eye-slash password-toggle"
+                       onclick="togglePassword('id_password1')"></i>
+                    {% if form.password1.errors %}<div class="invalid-feedback">{{ form.password1.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <i class="bi bi-lock input-icon"></i>
+                    <input type="password"
+                           name="password2"
+                           class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                           id="id_password2"
+                           placeholder="Confirm password"
+                           required>
+                    <i class="bi bi-eye-slash password-toggle"
+                       onclick="togglePassword('id_password2')"></i>
+                    {% if form.password2.errors %}<div class="invalid-feedback">{{ form.password2.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <div class="role-options">
+                        {% for choice in form.user_type %}
+                            <div class="form-check form-check-inline">
+                                {{ choice.tag }}
+                                <label class="form-check-label" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.user_type.errors %}<div class="invalid-feedback d-block">{{ form.user_type.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" id="terms" required>
+                    <label class="form-check-label small" for="terms">
+                        I agree to the <a href="#" class="text-primary">Terms of Service</a> and
+                        <a href="#" class="text-primary">Privacy Policy</a>
+                    </label>
+                </div>
+                <button type="submit" class="btn-register">Create Account</button>
+                <div class="login-link">
+                    Already have an account? <a href="{% url 'login' %}">Sign In</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}
+{% block extra_js %}
+    <script>
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        const icon = field.nextElementSibling;
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        }
+    }
+    
+    // Add hover effect for password toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggles = document.querySelectorAll('.password-toggle');
+        toggles.forEach(toggle => {
+            toggle.addEventListener('mouseenter', function() {
+                this.style.cursor = 'pointer';
+            });
+        });
+    });
+    </script>
+{% endblock extra_js %}

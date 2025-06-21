@@ -1,0 +1,136 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Proposals for {{ job.title }} | {{ block.super }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0">Proposals for "{{ job.title }}"</h4>
+                <small class="text-muted">View and manage job proposals</small>
+            </div>
+            <a href="{% url 'jobs:job_detail' job.slug %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Job
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+
+    <div class="card">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="h5 mb-0">Received Proposals</h3>
+                <span class="badge bg-primary">{{ proposals.count }} proposal{{ proposals.count|pluralize }}</span>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            {% if proposals %}
+                <div class="list-group list-group-flush">
+                    {% for proposal in proposals %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 me-3">
+                                        {% if proposal.freelancer.profile_photo %}
+                                            <img src="{{ proposal.freelancer.profile_photo.url }}" 
+                                                 alt="{{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}"
+                                                 class="rounded-circle" width="50" height="50">
+                                        {% else %}
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px;">
+                                                <i class="bi bi-person-fill text-muted" style="font-size: 1.5rem;"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">
+                                            {{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}
+                                            {% if proposal.freelancer.profile_title %}
+                                                <small class="text-muted d-block">{{ proposal.freelancer.profile_title }}</small>
+                                            {% endif %}
+                                        </h5>
+                                        <div class="d-flex align-items-center text-muted small">
+                                            <span class="me-3">
+                                                <i class="bi bi-currency-exchange me-1"></i>
+                                                TZS {{ proposal.bid_amount|floatformat:0 }}
+                                            </span>
+                                            <span class="me-3">
+                                                <i class="bi bi-clock me-1"></i>
+                                                {{ proposal.estimated_days|default:"N/A" }} days
+                                            </span>
+                                            <span class="badge {% if proposal.status == 'submitted' %}bg-info{% elif proposal.status == 'accepted' %}bg-success{% else %}bg-secondary{% endif %}">
+                                                {{ proposal.get_status_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <a href="{% url 'jobs:proposal_detail' job.slug proposal.id %}" class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                {% if is_paginated %}
+                    <div class="card-footer bg-white">
+                        <nav aria-label="Proposals pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo;</span>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for i in paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ i }} <span class="sr-only">(current)</span></span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&raquo;</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5>No proposals yet</h5>
+                    <p class="text-muted">You haven't received any proposals for this job yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    </div>
+</div>
+{% endblock %}

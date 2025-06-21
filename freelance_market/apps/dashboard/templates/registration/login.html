@@ -1,0 +1,178 @@
+{% extends "dashboard/base_simple.html" %}
+{% load static %}
+
+{% block title %}Login - Freelance Market{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'dashboard/css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <!-- Left Side - Illustration -->
+    <div class="login-illustration">
+        <div class="home-nav">
+            <a href="{% url 'home:home_page' %}" class="home-link-illustration">
+                <i class="bi bi-house-door"></i>
+            </a>
+            <a href="{% url 'home:home_page' %}" class="back-home-btn">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </a>
+        </div>
+        <div class="illustration-content">
+            <h1>Welcome Back</h1>
+            <p>Sign in to access your Freelance Market account and discover amazing opportunities</p>
+            <img src="{% static 'dashboard/img/login-illustration.svg' %}" alt="Login Illustration" class="illustration-img" width="280" height="240">
+            <div class="mt-4">
+                <p class="small">Don't have an account?</p>
+                <a href="{% url 'register' %}" class="btn btn-outline-light">Create Account</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Side - Login Form -->
+    <div class="login-form-container">
+        <div class="login-header">
+            <h2>Sign In</h2>
+            <p>Enter your credentials to continue</p>
+        </div>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'error' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% if next %}
+            {% if user.is_authenticated %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Your account doesn't have access to this page.
+                </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    Please login to continue.
+                </div>
+            {% endif %}
+        {% endif %}
+        
+        <form method="post" action="{% url 'login' %}" class="login-form" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            
+            <div class="form-group">
+                <i class="bi bi-person input-icon"></i>
+                <input type="text" 
+                       name="username" 
+                       class="form-control {% if form.username.errors %}is-invalid{% endif %}" 
+                       id="id_username" 
+                       placeholder="Username or Email" 
+                       value="{{ form.username.value|default:'' }}"
+                       required 
+                       autofocus>
+                {% if form.username.errors %}
+                <div class="invalid-feedback">
+                    {{ form.username.errors.0 }}
+                </div>
+                {% endif %}
+                <small class="form-text text-muted">You can use either your username or email to log in</small>
+            </div>
+            
+            <div class="form-group">
+                <i class="bi bi-lock input-icon"></i>
+                <input type="password" 
+                       name="password" 
+                       class="form-control {% if form.password.errors %}is-invalid{% endif %}" 
+                       id="id_password" 
+                       placeholder="Password" 
+                       required>
+                <i class="bi bi-eye-slash password-toggle" id="togglePassword"></i>
+                {% if form.password.errors %}
+                <div class="invalid-feedback">
+                    {{ form.password.errors.0 }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="rememberMe">
+                    <label class="form-check-label" for="rememberMe">
+                        Remember me
+                    </label>
+                </div>
+                <a href="{% url 'password_reset' %}" class="forgot-password">Forgot password?</a>
+            </div>
+            
+            <button type="submit" class="btn btn-login" id="loginButton">
+                <i class="bi bi-box-arrow-in-right"></i> Sign In
+            </button>
+        </form>
+        
+        <div class="login-footer">
+            Don't have an account? <a href="{% url 'register' %}">Sign up</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle password visibility
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#id_password');
+    
+    if (togglePassword && password) {
+        togglePassword.addEventListener('click', function() {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            this.classList.toggle('bi-eye');
+            this.classList.toggle('bi-eye-slash');
+        });
+    }
+    
+    // Add loading state to login button
+    const loginForm = document.querySelector('.login-form');
+    const loginButton = document.getElementById('loginButton');
+    
+    if (loginForm && loginButton) {
+        loginForm.addEventListener('submit', function() {
+            loginButton.classList.add('btn-loading');
+            loginButton.disabled = true;
+    });
+    
+    // Initialize form validation on input
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+    });
+    
+    // Focus on username field on page load
+    document.getElementById('{{ form.username.id_for_label }}').focus();
+});
+</script>
+{% endblock %}

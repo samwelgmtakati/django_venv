@@ -1,0 +1,153 @@
+/* Proposal Form Styling */
+
+/* Form container */
+.proposal-form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Job summary card */
+.job-summary-card {
+    background-color: #f8f9fa;
+    border-left: 4px solid #0d6efd;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0.25rem;
+}
+
+/* Form sections */
+.form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Form labels */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+/* Form controls */
+.form-control, .form-select {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* File upload area */
+.file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-upload-area:hover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+.file-upload-area.dragover {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+/* File list */
+.file-list {
+    margin-top: 1rem;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.file-item .file-icon {
+    margin-right: 0.75rem;
+    color: #6c757d;
+}
+
+.file-item .file-name {
+    flex-grow: 1;
+    margin-right: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-item .file-size {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-right: 1rem;
+}
+
+/* Buttons */
+.btn-submit {
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .proposal-form-container {
+        padding: 1rem;
+    }
+    
+    .form-section {
+        padding: 1rem;
+    }
+    
+    .file-upload-area {
+        padding: 1.5rem 1rem;
+    }
+}
+
+/* Form validation */
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+}
+
+/* Help text */
+.form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* Word count */
+.word-count {
+    font-size: 0.75rem;
+    color: #6c757d;
+    text-align: right;
+    margin-top: 0.25rem;
+}
+
+.word-count.limit-reached {
+    color: #dc3545;
+    font-weight: 500;
+}

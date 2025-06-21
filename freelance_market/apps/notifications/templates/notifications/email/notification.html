@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ notification.title }} - {{ site_name }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eaeaea;
+        }
+        .header h1 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 24px;
+        }
+        .content {
+            padding: 25px 0;
+        }
+        .message {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            border-top: 1px solid #eaeaea;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+            background-color: #e74c3c;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ site_name }}</h1>
+        </div>
+        
+        <div class="content">
+            <h2>{{ notification.title }}</h2>
+            <p>Hello {{ notification.user.get_full_name|default:notification.user.username }},</p>
+            
+            <div class="message">
+                {{ notification.message|linebreaksbr }}
+            </div>
+            
+            {% if notification.url %}
+                <div style="text-align: center; margin: 25px 0;">
+                    <a href="{{ protocol }}://{{ domain }}{{ notification.url }}" class="button">
+                        View Details
+                    </a>
+                </div>
+            {% endif %}
+            
+            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+            
+            <p>Best regards,<br>The {{ site_name }} Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {% now "Y" %} {{ site_name }}. All rights reserved.</p>
+            <p>
+                <a href="{{ protocol }}://{{ domain }}{% url 'home:home_page' %}" style="color: #7f8c8d; text-decoration: none;">Home</a> | 
+                <a href="{{ protocol }}://{{ domain }}/privacy/" style="color: #7f8c8d; text-decoration: none;">Privacy Policy</a> | 
+                <a href="{{ protocol }}://{{ domain }}/contact/" style="color: #7f8c8d; text-decoration: none;">Contact Us</a>
+            </p>
+            <p>
+                <small>
+                    You're receiving this email because you have an account on {{ site_name }}.
+                </small>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

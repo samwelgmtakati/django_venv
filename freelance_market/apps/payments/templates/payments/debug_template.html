@@ -1,0 +1,62 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Template Debug - Freelance Market{% endblock title %}
+
+{% block content %}
+{{ block.super }}
+<div class="container-fluid">
+    <h1 class="h3 mb-4">Template Debug Information</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Template Loading Debug</h5>
+        </div>
+        <div class="card-body">
+            <h6>Template Path:</h6>
+            <pre><code>{{ debug_info.template_path }}</code></pre>
+            
+            <h6 class="mt-4">Template Exists:</h6>
+            <div class="alert {{ debug_info.template_exists|yesno:'alert-success,alert-danger' }}">
+                {{ debug_info.template_exists|yesno:"Yes,No" }}
+                {% if debug_info.found_in %}
+                    <div class="mt-2">
+                        <strong>Found in:</strong>
+                        <code>{{ debug_info.found_in }}</code>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <h6 class="mt-4">Template Directories Checked:</h6>
+            <ul class="list-group mb-4">
+                {% for dir in debug_info.template_dirs %}
+                    <li class="list-group-item">
+                        <code>{{ dir }}</code>
+                        {% if dir in debug_info.found_in %}
+                            <span class="badge bg-success float-end">Found</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+            
+            <h6 class="mt-4">Django Can Load Template:</h6>
+            <div class="alert {{ debug_info.django_can_load|yesno:'alert-success,alert-danger' }}">
+                {{ debug_info.django_can_load|yesno:"Yes,No" }}
+                {% if debug_info.django_error %}
+                    <div class="mt-2">
+                        <strong>Error:</strong>
+                        <pre class="mt-2">{{ debug_info.django_error }}</pre>
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if debug_info.template_content %}
+                <h6 class="mt-4">Template Content:</h6>
+                <div class="border p-3 bg-light">
+                    <pre><code>{{ debug_info.template_content|escape }}</code></pre>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

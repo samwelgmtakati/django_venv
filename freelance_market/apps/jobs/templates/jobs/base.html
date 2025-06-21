@@ -1,0 +1,164 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* Job-specific styles */
+    .job-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .job-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+    }
+    .job-status {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    .job-status-draft { background-color: #e9ecef; color: #495057; }
+    .job-status-published { background-color: #d1e7dd; color: #0f5132; }
+    .job-status-in_progress { background-color: #fff3cd; color: #664d03; }
+    .job-status-completed { background-color: #cfe2ff; color: #084298; }
+    .job-status-cancelled { background-color: #f8d7da; color: #842029; }
+    
+    /* Responsive adjustments */
+    @media (max-width: 767.98px) {
+        .job-actions {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #dee2e6;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3 col-xl-2 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Job Dashboard</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'jobs:job_dashboard' %}" 
+                       class="list-group-item list-group-item-action {% if active_tab == 'dashboard' %}active{% endif %}">
+                        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                    </a>
+                    <a href="{% url 'jobs:job_list' %}" 
+                       class="list-group-item list-group-item-action {% if active_tab == 'all' %}active{% endif %}">
+                        <i class="bi bi-list-ul me-2"></i> All Jobs
+                    </a>
+                    <a href="{% url 'jobs:active_jobs' %}" 
+                       class="list-group-item list-group-item-action {% if active_tab == 'active' %}active{% endif %}">
+                        <i class="bi bi-lightning me-2"></i> Active
+                        <span class="badge bg-primary rounded-pill float-end">{{ job_stats.active|default:0 }}</span>
+                    </a>
+                    <a href="{% url 'jobs:completed_jobs' %}" 
+                       class="list-group-item list-group-item-action {% if active_tab == 'completed' %}active{% endif %}">
+                        <i class="bi bi-check-circle me-2"></i> Completed
+                        <span class="badge bg-success rounded-pill float-end">{{ job_stats.completed|default:0 }}</span>
+                    </a>
+                    <a href="{% url 'jobs:draft_jobs' %}" 
+                       class="list-group-item list-group-item-action {% if active_tab == 'drafts' %}active{% endif %}">
+                        <i class="bi bi-file-earmark-text me-2"></i> Drafts
+                        <span class="badge bg-warning text-dark rounded-pill float-end">{{ job_stats.draft|default:0 }}</span>
+                    </a>
+                    <div class="dropdown">
+                        <a href="#" class="list-group-item list-group-item-action dropdown-toggle" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-gear me-2"></i> Settings
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="{% url 'jobs:category_list' %}">Categories</a></li>
+                            <li><a class="dropdown-item" href="#">Notification Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Help & Support</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'dashboard:post_job' %}" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-lg me-2"></i> Post New Job
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-9 col-xl-10">
+            {% include 'dashboard/partials/messages.html' %}
+            
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">{% block page_title %}{% endblock %}</h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'jobs:job_dashboard' %}">Jobs</a></li>
+                            {% block breadcrumbs %}{% endblock %}
+                        </ol>
+                    </nav>
+                </div>
+                <div class="d-flex gap-2">
+                    {% block header_actions %}{% endblock %}
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            {% block job_content %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Job-specific JavaScript can go here
+$(document).ready(function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Confirm before deleting
+    $('.confirm-delete').on('click', function(e) {
+        e.preventDefault();
+        var confirmMessage = $(this).data('confirm') || 'Are you sure you want to delete this item?';
+        if (confirm(confirmMessage)) {
+            window.location.href = $(this).attr('href');
+        }
+    });
+    
+    // Toggle job status
+    $('.toggle-job-status').on('click', function(e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var url = $btn.data('url');
+        var newStatus = $btn.data('status');
+        
+        $.post(url, {status: newStatus})
+            .done(function(data) {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .fail(function() {
+                alert('An error occurred. Please try again.');
+            });
+    });
+});
+</script>
+{% endblock %}

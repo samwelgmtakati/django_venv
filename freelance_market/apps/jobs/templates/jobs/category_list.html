@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Job Categories{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h3 mb-0">Job Categories</h1>
+            <p class="text-muted mb-0">Manage job categories for your platform</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'jobs:category_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Add Category
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if categories %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Icon</th>
+                                <th>Jobs</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in categories %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if category.icon %}
+                                            <i class="{{ category.icon }} me-2"></i>
+                                        {% endif %}
+                                        <span>{{ category.name }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ category.description|truncatechars:60|default:"-" }}</td>
+                                <td>{% if category.icon %}<i class="{{ category.icon }}"></i>{% else %}-{% endif %}</td>
+                                <td>{{ category.jobs.count }}</td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a href="{% url 'jobs:category_update' category.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'jobs:category_delete' category.pk %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-tags text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5>No categories found</h5>
+                    <p class="text-muted">Get started by creating your first category</p>
+                    <a href="{% url 'jobs:category_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Add Category
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}New Message{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'messages:inbox' %}">Messages</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">New Message</li>
+                </ol>
+            </nav>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-paper-plane me-2"></i>New Message
+                    </h5>
+                </div>
+                <div class="card-body">
+                <div class="card-body">
+                    {% if job or proposal %}
+                    <div class="alert alert-info m-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <div>
+                                {% if job %}
+                                    <strong>Job:</strong> 
+                                    <a href="{{ job.get_absolute_url }}" class="text-decoration-none">
+                                        {{ job.title }}
+                                    </a>
+                                    <input type="hidden" name="job_id" value="{{ job.id }}">
+                                {% elif proposal %}
+                                    <div class="mb-1">
+                                        <strong>Proposal for:</strong> 
+                                        <a href="{{ proposal.job.get_absolute_url }}" class="text-decoration-none">
+                                            {{ proposal.job.title }}
+                                        </a>
+                                        <input type="hidden" name="proposal_id" value="{{ proposal.id }}">
+                                    </div>
+                                    <div>
+                                        <strong>From:</strong> 
+                                        <a href="{{ proposal.freelancer.get_absolute_url }}" class="text-decoration-none">
+                                            {{ proposal.freelancer.get_display_name }}
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" enctype="multipart/form-data" id="messageForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="id_subject" class="form-label">Subject</label>
+                            <input type="text" name="subject" class="form-control {% if form.subject.errors %}is-invalid{% endif %}" 
+                                   id="id_subject" value="{{ form.subject.value|default:'' }}" 
+                                   placeholder="Enter a descriptive subject" required>
+                            {% if form.subject.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.subject.errors|join:", " }}
+                                </div>
+                            {% else %}
+                                <div class="form-text">Enter a descriptive subject for your message</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_recipient" class="form-label">To</label>
+                            {% if job or proposal %}
+                                <!-- Show recipient as read-only when in job/proposal context -->
+                                <div class="form-control bg-light">
+                                    {% if job %}
+                                        {{ job.client.get_display_name }} ({{ job.client.email }})
+                                        <input type="hidden" name="recipient" value="{{ job.client.id }}" required>
+                                    {% elif proposal %}
+                                        {{ proposal.freelancer.get_display_name }} ({{ proposal.freelancer.email }})
+                                        <input type="hidden" name="recipient" value="{{ proposal.freelancer.id }}" required>
+                                    {% endif %}
+                                </div>
+                                <div class="form-text">This message is related to a specific {% if job %}job{% else %}proposal{% endif %}</div>
+                            {% else %}
+                                <!-- Show recipient dropdown for new messages -->
+                                <select name="recipient" class="form-select {% if form.recipient.errors %}is-invalid{% endif %}" 
+                                        id="id_recipient" required>
+                                    <option value="" selected disabled>Select a recipient</option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}" 
+                                                {% if form.recipient.value == user.id|stringformat:'s' or user == recipient %}selected{% endif %}>
+                                            {{ user.get_display_name }} ({{ user.email }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.recipient.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.recipient.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_message" class="form-label">Message</label>
+                            <textarea name="message" class="form-control {% if form.message.errors %}is-invalid{% endif %}" 
+                                      id="id_message" rows="8" placeholder="Type your message here..." required>{{ form.message.value|default:'' }}</textarea>
+                            {% if form.message.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.message.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_attachments" class="form-label">Attachments</label>
+                            <div class="file-upload-container">
+                                <input type="file" name="attachments" class="form-control {% if form.attachments.errors %}is-invalid{% endif %}" 
+                                       id="id_attachments" multiple>
+                                <div class="file-upload-preview mt-2" id="filePreview"></div>
+                                {% if form.attachments.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.attachments.errors|join:", " }}
+                                    </div>
+                                {% else %}
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        You can attach up to 5 files (max 10MB each)
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                            <div>
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="fas fa-paper-plane me-1"></i> Send Message
+                                </button>
+                                <a href="{% url 'messages:inbox' %}" class="btn btn-outline-secondary ms-2">
+                                    <i class="fas fa-times me-1"></i> Cancel
+                                </a>
+                            </div>
+                            <div class="text-muted small">
+                                <i class="fas fa-lock me-1"></i>
+                                Messages are encrypted and secure
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus the subject or message field
+    const subjectInput = document.getElementById('id_subject');
+    const messageInput = document.getElementById('id_message');
+    
+    if (subjectInput && !subjectInput.value) {
+        subjectInput.focus();
+    } else if (messageInput) {
+        messageInput.focus();
+    }
+    
+    // File upload validation and preview
+    const fileInput = document.getElementById('id_attachments');
+    const filePreview = document.getElementById('filePreview');
+    const maxFileSize = 10 * 1024 * 1024; // 10MB in bytes
+    const maxFiles = 5;
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            const files = this.files;
+            
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].size > maxSize) {
+                    alert(`File "${files[i].name}" is too large. Maximum file size is 10MB.`);
+                    this.value = ''; // Clear the file input
+                    break;
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

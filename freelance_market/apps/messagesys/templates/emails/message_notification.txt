@@ -1,0 +1,29 @@
+Hello {{ user.get_full_name|default:user.username }},
+
+You have {{ total_unread }} unread message{{ total_unread|pluralize }} in your {{ site.name }} inbox.
+
+{% for thread_info in unread_threads %}
+---
+{{ thread_info.thread.subject|default:"(No subject)" }}
+From: {{ thread_info.messages.0.sender.get_full_name|default:thread_info.messages.0.sender.username }}
+
+{% for message in thread_info.messages|slice:":3" %}
+{{ message.sent_at|date:"M j, Y g:i A" }} - {{ message.sender.get_full_name|default:message.sender.username }}:
+{{ message.body|truncatewords:30 }}
+
+{% endfor %}
+{% if thread_info.count > 3 %}
+... and {{ thread_info.count|add:"-3" }} more message{{ thread_info.count|add:"-3"|pluralize }}
+{% endif %}
+View conversation: https://{{ site.domain }}{{ thread_info.thread.get_absolute_url }}
+
+{% endfor %}
+
+---
+
+View all your messages: https://{{ site.domain }}{% url 'messages:inbox' %}
+
+You're receiving this email because you have unread messages in your {{ site.name }} account.
+
+Best regards,
+The {{ site.name }} Team

@@ -1,0 +1,241 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Freelance Market - Dashboard{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    
+    <!-- Custom CSS -->
+    <link href="{% static 'dashboard/css/dashboard.css' %}" rel="stylesheet">
+    <link href="{% static 'dashboard/css/sidebar.css' %}" rel="stylesheet">
+    
+    <!-- Debug Info -->
+    {% if debug %}
+    <style>
+        .debug-info {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            z-index: 9999;
+        }
+    </style>
+    {% endif %}
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-light">
+    <div class="d-flex" id="wrapper">
+        <!-- Sidebar -->
+        <div class="border-end bg-white" id="sidebar-wrapper">
+            <div class="sidebar-heading border-bottom bg-light">
+                <a href="{% url 'dashboard:home' %}" class="text-decoration-none text-dark">
+                    <i class="fas fa-rocket me-2"></i>
+                    <span>Freelance Market</span>
+                </a>
+            </div>
+            <!-- User Info (Minimal) -->
+            <div class="p-3 small text-muted border-bottom bg-light">
+                <div class="d-flex align-items-center">
+                    {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" class="rounded-circle me-2" width="32" height="32" alt="{{ user.get_full_name|default:user.username }}">
+                    {% else %}
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+                        <small class="text-muted">{{ user.email|default:"No email" }}</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="list-group list-group-flush">
+                <a href="{% url 'dashboard:home' %}" class="list-group-item list-group-item-action {% if active_page == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+                
+                {% if user.is_admin %}
+                <a href="{% url 'dashboard:admin_dashboard' %}" class="list-group-item list-group-item-action {% if active_page == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fas fa-shield-alt me-2"></i>Admin Dashboard
+                </a>
+                {% endif %}
+                
+                {% if user.is_client %}
+                <a href="{% url 'dashboard:post_job' %}" class="list-group-item list-group-item-action {% if active_page == 'post_job' %}active{% endif %}">
+                    <i class="fas fa-plus-circle me-2"></i>Post a Job
+                </a>
+                <a href="{% url 'dashboard:client_proposals' %}" class="list-group-item list-group-item-action {% if active_page == 'proposals' %}active{% endif %}">
+                    <i class="fas fa-file-alt me-2"></i>Proposals
+                </a>
+                {% endif %}
+                
+                {% if user.is_freelancer %}
+                <a href="{% url 'dashboard:find_work' %}" class="list-group-item list-group-item-action {% if active_page == 'find_work' %}active{% endif %}">
+                    <i class="fas fa-briefcase me-2"></i>Find Work
+                </a>
+                <a href="{% url 'dashboard:freelancer_proposals' %}" class="list-group-item list-group-item-action {% if active_page == 'freelancer_proposals' %}active{% endif %}">
+                    <i class="fas fa-file-alt me-2"></i>My Proposals
+                </a>
+                {% endif %}
+                
+                <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#profileModal">
+                    <i class="fas fa-user me-2"></i>My Profile
+                </a>
+                
+                <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </a>
+            </div>
+        </div>
+        
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <!-- Top Navigation -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+                <div class="container-fluid">
+                    <button class="btn btn-link" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    
+                    <div class="d-flex align-items-center ms-auto">
+                        <div class="dropdown">
+                            <button class="btn btn-link dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle fa-lg"></i>
+                                <span class="ms-2 d-none d-md-inline">{{ user.username }}</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">My Profile</a></li>
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">Settings</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/accounts/logout/">Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- Main Content -->
+            <div class="container-fluid px-4 py-4">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Toggle sidebar
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.getElementById('wrapper').classList.toggle('toggled');
+        });
+        
+        // Enable tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    </script>
+    
+    <!-- Profile Modal -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="profileModalLabel">My Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-circle fa-5x text-muted mb-3"></i>
+                        <h4>{{ user.get_full_name|default:user.username }}</h4>
+                        <p class="text-muted">{{ user.email }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Role:</strong>
+                        {% if user.is_admin %}
+                            <span class="badge bg-primary">Administrator</span>
+                        {% elif user.is_freelancer %}
+                            <span class="badge bg-success">Freelancer</span>
+                        {% elif user.is_client %}
+                            <span class="badge bg-info">Client</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Member since:</strong> {{ user.date_joined|date:"F j, Y" }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="/admin/accounts/user/{{ user.id }}/change/" class="btn btn-primary">
+                        <i class="fas fa-edit me-1"></i> Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="settingsModalLabel">Account Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <a href="{% url 'dashboard:password_change' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-key me-2"></i> Change Password
+                        </a>
+                        <a href="{% url 'dashboard:password_reset' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-lock me-2"></i> Reset Password
+                        </a>
+                        {% if user.is_admin %}
+                        <a href="{% url 'admin:index' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-cog me-2"></i> Admin Panel
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+    
+    {% if debug %}
+    <div class="debug-info">
+        Debug: {{ request.path }} | User: {{ user.username }} | Auth: {{ user.is_authenticated }}
+    </div>
+    {% endif %}
+</body>
+</html>

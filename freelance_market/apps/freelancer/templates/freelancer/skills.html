@@ -1,0 +1,84 @@
+{% extends 'freelancer/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">My Skills</h4>
+                    <a href="{% url 'freelancer:create_skill' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Add New Skill
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if skills %}
+                        <div class="list-group mb-4">
+                            {% for skill in skills %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ skill.name }}
+                                    <form method="post" action="{% url 'freelancer:remove_skill' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="skill_id" value="{{ skill.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                onclick="return confirm('Are you sure you want to remove this skill?')">
+                                            <i class="fas fa-trash-alt"></i> Remove
+                                        </button>
+                                    </form>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            You haven't added any skills yet. Add your first skill to get started!
+                        </div>
+                    {% endif %}
+
+                    {% if available_skills %}
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Add Existing Skills</h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="post" action="{% url 'freelancer:add_skill' %}" class="row g-3">
+                                    {% csrf_token %}
+                                    <div class="col-md-8">
+                                        <select name="skill_id" class="form-select" required>
+                                            <option value="" selected disabled>Select a skill to add</option>
+                                            {% for skill in available_skills %}
+                                                <option value="{{ skill.id }}">{{ skill.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fas fa-plus"></i> Add Skill
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-end">
+                    <a href="{% url 'freelancer:profile' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

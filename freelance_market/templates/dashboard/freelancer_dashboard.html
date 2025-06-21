@@ -1,0 +1,280 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Freelancer Dashboard{% endblock title %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'dashboard/css/freelancer-dashboard.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="freelancer-dashboard">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Freelancer Dashboard</h1>
+            <div class="section-actions">
+                <a href="{% url 'services:service_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus fa-sm me-1"></i> Create New Service
+                </a>
+                <a href="{% url 'dashboard:find_work' %}" class="btn btn-outline-primary ms-2">
+                    <i class="fas fa-search fa-sm me-1"></i> Find Work
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row">
+            <!-- Total Services Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="stat-label">Total Services</h6>
+                                <h3 class="stat-value">{{ total_services }}</h3>
+                            </div>
+                            <div class="stat-icon bg-primary-light">
+                                <i class="fas fa-tasks text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Proposals Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="stat-label">Active Proposals</h6>
+                                <h3 class="stat-value">{{ active_proposals }}</h3>
+                            </div>
+                            <div class="stat-icon bg-success-light">
+                                <i class="fas fa-paper-plane text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Jobs Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="stat-label">Active Jobs</h6>
+                                <h3 class="stat-value">{{ active_jobs }}</h3>
+                            </div>
+                            <div class="stat-icon bg-info-light">
+                                <i class="fas fa-briefcase text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Jobs Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="stat-label">Completed Jobs</h6>
+                                <h3 class="stat-value">{{ completed_jobs }}</h3>
+                            </div>
+                            <div class="stat-icon bg-warning-light">
+                                <i class="fas fa-check-circle text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Services & Proposals Row -->
+        <div class="row">
+            <!-- My Services -->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow mb-4 h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="m-0">My Services</h6>
+                        <a href="{% url 'services:service_list' %}" class="btn btn-sm btn-link text-primary p-0">View All</a>
+                    </div>
+                    <div class="card-body">
+                        {% if services %}
+                            <div class="list-group list-group-flush">
+                                {% for service in services %}
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ service.title }}</h6>
+                                        <span class="badge bg-{{ service.is_active|yesno:'success,secondary' }}">
+                                            {{ service.is_active|yesno:"Active,Inactive" }}
+                                        </span>
+                                    </div>
+                                    <p class="mb-1 text-muted small">{{ service.short_description|truncatechars:100 }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-tag me-1"></i>{{ service.category.name }}
+                                        </small>
+                                        <small class="text-primary fw-bold">TZS {{ service.price }}</small>
+                                    </div>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">You haven't created any services yet.</p>
+                                <a href="{% url 'services:service_create' %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus me-1"></i> Create Your First Service
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Proposals -->
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow mb-4 h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="m-0">Recent Proposals</h6>
+                        <a href="{% url 'jobs:job_list' %}" class="btn btn-sm btn-link text-primary p-0">View All</a>
+                    </div>
+                    <div class="card-body">
+                        {% if proposals %}
+                            <div class="list-group list-group-flush">
+                                {% for proposal in proposals %}
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            <a href="{% url 'jobs:job_detail' proposal.job.slug %}" class="text-dark">
+                                                {{ proposal.job.title }}
+                                            </a>
+                                        </h6>
+                                        <span class="badge bg-{{ proposal.status|lower }}">
+                                            {{ proposal.get_status_display }}
+                                        </span>
+                                    </div>
+                                    <p class="mb-1 text-muted small">
+                                        {{ proposal.cover_letter|truncatechars:100 }}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="far fa-clock me-1"></i>
+                                            {{ proposal.submitted_at|timesince }} ago
+                                        </small>
+                                        <small class="text-primary">
+                                            TZS {{ proposal.bid_amount }}
+                                        </small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">You haven't submitted any proposals yet.</p>
+                                <a href="{% url 'dashboard:find_work' %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-search me-1"></i> Find Jobs
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Jobs -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="m-0">Recommended Jobs</h6>
+                        <a href="{% url 'jobs:job_list' %}" class="btn btn-sm btn-link text-primary p-0">Browse All Jobs</a>
+                    </div>
+                    <div class="card-body">
+                        {% if recommended_jobs %}
+                            <div class="row">
+                                {% for job in recommended_jobs %}
+                                <div class="col-md-4 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span class="badge bg-primary bg-opacity-10 text-primary">
+                                                    {{ job.get_job_type_display }}
+                                                </span>
+                                                <small class="text-muted">
+                                                    <i class="far fa-clock me-1"></i>
+                                                    {{ job.created_at|timesince }} ago
+                                                </small>
+                                            </div>
+                                            <h5 class="card-title">
+                                                <a href="{% url 'jobs:job_detail' job.slug %}" class="text-dark">
+                                                    {{ job.title }}
+                                                </a>
+                                            </h5>
+                                            <p class="card-text text-muted small">
+                                                {{ job.description|truncatechars:120 }}
+                                            </p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    {% for skill in job.skills.all|slice:":2" %}
+                                                        <span class="badge bg-light text-dark me-1">
+                                                            {{ skill.name }}
+                                                        </span>
+                                                    {% endfor %}
+                                                    {% if job.skills.count > 2 %}
+                                                        <span class="badge bg-light text-muted">+{{ job.skills.count|add:"-2" }} more</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <span class="text-primary fw-bold">
+                                                        TZS {{ job.budget }}
+                                                    </span>
+                                                    <span class="text-muted">/ {{ job.get_budget_type_display }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-transparent">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm me-2">
+                                                        <span class="avatar-title rounded-circle bg-light text-dark">
+                                                            {{ job.client.get_initials }}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <small class="d-block text-muted">Client</small>
+                                                        <small class="fw-bold">{{ job.client.get_full_name|default:job.client.username }}</small>
+                                                    </div>
+                                                </div>
+                                                <a href="{% url 'jobs:job_detail' job.slug %}" class="btn btn-sm btn-outline-primary">
+                                                    View Details
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No recommended jobs found based on your skills.</p>
+                                <a href="{% url 'jobs:job_list' %}" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i> Find Jobs
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

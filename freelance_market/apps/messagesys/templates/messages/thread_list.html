@@ -1,0 +1,191 @@
+{% extends "messages/base.html" %}
+{% load static %}
+
+{% block message_title %}Inbox{% endblock %}
+
+{% block message_heading %}Inbox{% endblock %}
+
+{% block message_content %}
+<div class="inbox-container">
+    <div class="row">
+        <div class="col-12">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-inbox me-2"></i>
+                            {% block page_title %}Inbox{% endblock %}
+                        </h5>
+                        {% if unread_count > 0 %}
+                            <span class="badge bg-danger ms-2">{{ unread_count }} unread</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex">
+                        <div class="input-group input-group-sm" style="max-width: 250px;">
+                            <input type="text" class="form-control" placeholder="Search messages...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Participants</th>
+                                    <th>Last Message</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for thread in threads %}
+                                <tr class="message-item {% if thread.unread_count > 0 %}unread{% endif %}">
+                                    <td>
+                                        <a href="{{ thread.get_absolute_url }}" class="fw-bold {% if thread.unread_count > 0 %}text-primary{% endif %}">
+                                            {% if thread.job %}[{{ thread.job.title|truncatechars:30 }}] {% endif %}
+                                            {{ thread.subject|default:"No Subject" }}
+                                            {% if thread.unread_count > 0 %}
+                                                <span class="badge bg-danger ms-1">{{ thread.unread_count }}</span>
+                                            {% endif %}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% for participant in thread.participants.all %}
+                                            {% if participant != request.user %}
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar avatar-sm me-2">
+                                                        {% if participant.profile_picture %}
+                                                            <img src="{{ participant.profile_picture.url }}" 
+                                                                 class="rounded-circle" 
+                                                                 alt="{{ participant.get_display_name }}"
+                                                                 style="width: 24px; height: 24px; object-fit: cover;">
+                                                        {% else %}
+                                                            <div class="avatar-text bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                                                 style="width: 24px; height: 24px; font-size: 0.75rem;">
+                                                                {{ participant.get_initials }}
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <span>{{ participant.get_display_name }}</span>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {% with last_message=thread.messages.last %}
+                                            {% if last_message %}
+                                                <div class="small text-muted">
+                                                    {{ last_message.sent_at|timesince }} ago
+                                                </div>
+                                                <div class="text-truncate" style="max-width: 200px;">
+                                                    {{ last_message.body|truncatewords:10 }}
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group">
+                                            <a href="{{ thread.get_absolute_url }}" class="btn btn-sm btn-outline-primary" 
+                                               data-bs-toggle="tooltip" title="View Conversation">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            
+                                            <a href="{% url 'messages:delete_thread' thread.id %}" class="btn btn-sm btn-outline-danger" 
+                                               data-bs-toggle="tooltip" title="Delete Conversation">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        <div class="text-muted">
+                                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                                            <p class="mb-0">Your inbox is empty</p>
+                                            <a href="{% url 'messages:new_thread' %}" class="btn btn-primary mt-2">
+                                                <i class="fas fa-plus me-1"></i> Start a new conversation
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if is_paginated %}
+                <div class="card-footer">
+                    <nav aria-label="Threads navigation">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">&laquo;</span>
+                                </li>
+                            {% endif %}
+                            
+                            {% for i in paginator.page_range %}
+                                {% if page_obj.number == i %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ i }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">&raquo;</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Withdraw Funds - Freelance Market{% endblock %}
+
+{% block content %}
+{{ block.super }}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0">Withdraw Funds</h2>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-bank2 text-primary" style="font-size: 3rem;"></i>
+                        <h2 class="h4 mt-3">Withdraw Your Earnings</h2>
+                        <p class="text-muted">Transfer funds to your bank account</p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 border-primary">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Available Balance</h5>
+                                    <h2 class="text-primary">TZS {{ available_balance|default:"0.00"|floatformat:2 }}</h2>
+                                    <p class="small text-muted mb-0">Minimum withdrawal: TZS {{ min_withdrawal|default:"10.00"|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Next Payout</h5>
+                                    <h2>TZS 0.00</h2>
+                                    <p class="small text-muted mb-0">Processed on the 1st of each month</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="amount" class="form-label">Amount to Withdraw</label>
+                            <div class="input-group">
+                                <span class="input-group-text">TZS</span>
+                                <input type="number" 
+                                       class="form-control form-control-lg" 
+                                       id="amount" 
+                                       name="amount" 
+                                       min="{{ min_withdrawal|default:10 }}" 
+                                       step="0.01" 
+                                       placeholder="0.00" 
+                                       required>
+                                <div class="invalid-feedback">
+                                    Please enter a valid amount (minimum TZS {{ min_withdrawal|default:10|floatformat:2 }})
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                Available: TZS {{ available_balance|default:"0.00"|floatformat:2 }} | Fee: 1% per transaction
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Withdrawal Method</label>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="withdrawalMethod" id="bankTransfer" checked>
+                                        <label class="form-check-label d-flex justify-content-between w-100" for="bankTransfer">
+                                            <div>
+                                                <i class="bi bi-bank me-2"></i>
+                                                Bank Transfer
+                                            </div>
+                                            <span class="text-muted small">2-3 business days</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Processing Time:</strong> Withdrawals are processed within 2-3 business days. A 1% fee applies to all withdrawals.
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Request Withdrawal
+                            </button>
+                            <a href="{% url 'payments:dashboard' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Form validation
+(function () {
+    'use strict';
+    
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    var forms = document.querySelectorAll('.needs-validation');
+    
+    // Loop over them and prevent submission
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+</script>
+{% endblock %}

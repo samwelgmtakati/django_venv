@@ -1,0 +1,179 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Post a New Job{% endblock title %}
+
+{% block extra_head %}
+<!-- Additional CSS for this page -->
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+    .form-label.required:after {
+        content: " *";
+        color: #dc3545;
+    }
+    .card {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .card-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+</style>
+{% endblock extra_head %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h4 mb-0">Post a New Job</h2>
+                    <p class="mb-0">Fill in the details below to create a new job posting</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" id="form_action" name="form_action" value="draft">
+                        
+                        <!-- Job Title -->
+                        <div class="mb-4">
+                            <label for="jobTitle" class="form-label fw-bold required">Job Title</label>
+                            <input type="text" class="form-control form-control-lg" id="jobTitle" name="jobTitle" required>
+                            <div class="invalid-feedback">
+                                Please provide a job title.
+                            </div>
+                        </div>
+                        
+                        <!-- Job Description -->
+                        <div class="mb-4">
+                            <label for="jobDescription" class="form-label fw-bold required">Job Description</label>
+                            <textarea class="form-control" id="jobDescription" name="jobDescription" rows="6" required 
+                                placeholder="Provide a detailed description of the job, including main tasks and responsibilities..."></textarea>
+                            <div class="form-text text-muted">
+                                You can use basic formatting like *bold*, _italic_, and line breaks.
+                            </div>
+                            <div class="invalid-feedback">
+                                Please provide a job description.
+                            </div>
+                        </div>
+                        
+                        <!-- Job Requirements -->
+                        <div class="mb-4">
+                            <label for="jobRequirements" class="form-label fw-bold required">Requirements</label>
+                            <textarea class="form-control" id="jobRequirements" name="jobRequirements" rows="4" required
+                                placeholder="List the skills, qualifications, and experience required for this job..."></textarea>
+                            <div class="form-text text-muted">
+                                Enter one requirement per line for better readability.
+                            </div>
+                            <div class="invalid-feedback">
+                                Please provide job requirements.
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Category -->
+                            <div class="col-md-6 mb-4">
+                                <label for="jobCategory" class="form-label fw-bold required">Category</label>
+                                <select class="form-select" id="jobCategory" name="jobCategory" required>
+                                    <option value="" selected disabled>Select a category</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% empty %}
+                                        <option value="" disabled>No categories available</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a category.
+                                </div>
+                            </div>
+                            
+                            <!-- Budget -->
+                            <div class="col-md-6 mb-4">
+                                <label for="jobBudget" class="form-label fw-bold">Budget (TZS)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">TZS</span>
+                                    <input type="number" class="form-control" id="jobBudget" name="jobBudget" min="5" step="1">
+                                </div>
+                                <div class="form-text text-muted">
+                                    Leave blank if you want to discuss the budget with freelancers.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Deadline -->
+                        <div class="mb-4">
+                            <label for="jobDeadline" class="form-label fw-bold">Deadline</label>
+                            <div class="col-md-6">
+                                <input type="date" class="form-control" id="jobDeadline" name="jobDeadline" min="{{ today|date:'Y-m-d' }}">
+                            </div>
+                            <div class="form-text text-muted">
+                                When does this job need to be completed by?
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between align-items-center pt-4 border-top mt-4">
+                            <a href="{% url 'dashboard:client_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Cancel
+                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="submit" name="save_draft" value="1" class="btn btn-outline-primary">
+                                    <i class="bi bi-save me-2"></i>Save as Draft
+                                </button>
+                                {% if form.instance.pk and form.instance.status == 'draft' %}
+                                <a href="{% url 'jobs:job_publish' form.instance.slug %}" class="btn btn-outline-success" title="Publish" onclick="event.preventDefault(); window.location.href='{% url 'jobs:job_publish' form.instance.slug %}';">
+                                    <i class="bi bi-upload"></i>
+                                </a>
+                                {% else %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send-check me-2"></i>Update Job
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+// Form validation
+(function () {
+    'use strict';
+    
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    const forms = document.querySelectorAll('.needs-validation');
+    
+    // Loop over them and handle submission
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', function(event) {
+            // Only validate if not clicking the publish button
+            const clickedButton = document.activeElement;
+            if (clickedButton && clickedButton.name === 'publish') {
+                // For publish, ensure required fields are filled
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }
+            // For draft, always allow submission
+            
+            form.classList.add('was-validated');
+        }, false);
+    });
+    
+    // Ensure textareas are properly styled
+    document.querySelectorAll('textarea').forEach(textarea => {
+        textarea.style.minHeight = '120px';
+        textarea.style.width = '100%';
+    });
+})();
+</script>
+{% endblock extra_scripts %}

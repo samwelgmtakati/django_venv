@@ -1,0 +1,261 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}My Profile - Client Dashboard{% endblock title %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        color: white;
+        padding: 2rem 0;
+        border-radius: 0.35rem;
+        margin-bottom: 2rem;
+    }
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 5px solid white;
+        object-fit: cover;
+    }
+    .stat-card {
+        border-left: 4px solid #4e73df;
+        transition: all 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    .recent-jobs .card {
+        transition: all 0.3s;
+    }
+    .recent-jobs .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="profile-header mb-4">
+        <div class="container text-center">
+            <div class="d-flex justify-content-center mb-3">
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="profile-avatar img-thumbnail" width="150" height="150">
+                {% else %}
+                    <img src="{% static 'dashboard/img/default-avatar.png' %}" alt="Default Profile" class="profile-avatar img-thumbnail" width="150" height="150">
+                {% endif %}
+            </div>
+            <h2 class="mb-1">{{ user.get_full_name|default:user.username }}</h2>
+            <p class="mb-0"><i class="fas fa-envelope me-2"></i> {{ user.email }}</p>
+            {% if user.phone_number %}
+                <p class="mb-0"><i class="fas fa-phone me-2"></i> {{ user.phone_number }}</p>
+            {% endif %}
+            <div class="mt-3">
+                <a href="#" class="btn btn-light btn-sm me-2">
+                    <i class="fas fa-edit me-1"></i> Edit Profile
+                </a>
+                <a href="#" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-cog me-1"></i> Settings
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-0">Total Jobs Posted</h6>
+                            <h3 class="mb-0">{{ posted_jobs_count }}</h3>
+                        </div>
+                        <div class="icon-circle bg-primary text-white">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-0">Active Jobs</h6>
+                            <h3 class="mb-0">{{ active_jobs_count }}</h3>
+                        </div>
+                        <div class="icon-circle bg-success text-white">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-0">Completed Jobs</h6>
+                            <h3 class="mb-0">{{ completed_jobs_count }}</h3>
+                        </div>
+                        <div class="icon-circle bg-info text-white">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Jobs -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Jobs</h6>
+                    <a href="{% url 'dashboard:my_projects' %}" class="btn btn-sm btn-primary">View All Jobs</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_jobs %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Job Title</th>
+                                        <th>Posted</th>
+                                        <th>Proposals</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for job in recent_jobs %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'jobs:job_detail' job.id %}" class="text-primary">
+                                                    {{ job.title|truncatechars:50 }}
+                                                </a>
+                                            </td>
+                                            <td>{{ job.created_at|date:"M d, Y" }}</td>
+                                            <td>{{ job.proposals.count }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ job.get_status_display|lower }}">
+                                                    {{ job.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'jobs:job_detail' job.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">You haven't posted any jobs yet.</p>
+                            <a href="{% url 'dashboard:post_job' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Post Your First Job
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="row mt-4">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-star me-2"></i>Reviews
+                        {% if avg_rating %}
+                            <span class="badge bg-primary ms-2">{{ avg_rating|floatformat:1 }} <i class="fas fa-star"></i></span>
+                        {% endif %}
+                        <small class="text-muted ms-2">({{ total_reviews }} review{{ total_reviews|pluralize }})</small>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if reviews_received %}
+                        <div class="row">
+                            {% for review in reviews_received|slice:":5" %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <div>
+                                                    <h6 class="mb-0">
+                                                        {{ review.reviewer.get_full_name|default:review.reviewer.username }}
+                                                        {% if review.is_client_review %}
+                                                            <span class="badge bg-info ms-2">Client</span>
+                                                        {% else %}
+                                                            <span class="badge bg-success ms-2">Freelancer</span>
+                                                        {% endif %}
+                                                    </h6>
+                                                    <small class="text-muted">{{ review.created_at|timesince }} ago</small>
+                                                </div>
+                                                <div class="star-rating">
+                                                    {% for i in "12345" %}
+                                                        {% if forloop.counter <= review.rating %}
+                                                            <i class="fas fa-star text-warning"></i>
+                                                        {% else %}
+                                                            <i class="far fa-star text-warning"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            {% if review.comment %}
+                                                <p class="mb-0">{{ review.comment|linebreaksbr }}</p>
+                                            {% else %}
+                                                <p class="text-muted mb-0">No comment provided.</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if total_reviews > 5 %}
+                            <div class="text-center mt-3">
+                                <a href="#" class="btn btn-outline-primary">
+                                    View All Reviews <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No reviews yet. Reviews will appear here once you receive feedback on completed orders.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    // Add any custom JavaScript here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock extra_js %}

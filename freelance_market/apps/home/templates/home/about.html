@@ -1,0 +1,231 @@
+{% extends 'home/base.html' %}
+{% load static %}
+
+{% block title %}About Us - Freelance Market{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="about-hero bg-primary text-white py-5">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Empowering Freelancers & Businesses</h1>
+                <p class="lead">Connecting top talent with businesses worldwide to create meaningful work relationships.</p>
+                <div class="d-flex gap-3 mt-4">
+                    <a href="#our-story" class="btn btn-light btn-lg">Our Story</a>
+                    <a href="#our-team" class="btn btn-outline-light btn-lg">Meet the Team</a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d" alt="Team collaboration" class="img-fluid rounded-3 shadow">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Story Section -->
+<section id="our-story" class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 order-lg-2 mb-4 mb-lg-0">
+                <img src="https://images.unsplash.com/photo-1552664730-d307ca884978" alt="Our office" class="img-fluid rounded-3 shadow">
+            </div>
+            <div class="col-lg-6 order-lg-1 pe-lg-5">
+                <span class="badge bg-primary bg-opacity-10 text-primary mb-3">Our Story</span>
+                <h2 class="fw-bold mb-4">Building the Future of Work</h2>
+                <p class="lead">Founded in 2025, Freelance Market was born from a simple idea: to create a better way for businesses and freelancers to connect and collaborate.</p>
+                <p>In today's rapidly evolving work landscape, traditional employment models are being redefined. We saw an opportunity to build a platform that empowers both businesses to find top talent and freelancers to build meaningful careers on their own terms.</p>
+                <div class="row mt-4 g-4">
+                    <div class="col-md-6">
+                        <div class="d-flex">
+                            <div class="me-3 text-primary">
+                                <i class="bi bi-people fs-2"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold">100,000+</h5>
+                                <p class="text-muted mb-0">Active Freelancers</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex">
+                            <div class="me-3 text-primary">
+                                <i class="bi bi-building fs-2"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold">50,000+</h5>
+                                <p class="text-muted mb-0">Businesses Served</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Values Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="badge bg-primary bg-opacity-10 text-primary mb-3">Our Values</span>
+            <h2 class="fw-bold">What Drives Us</h2>
+            <p class="lead text-muted">Core principles that guide our work every day</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
+                            <i class="bi bi-heart fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Passion</h5>
+                        <p class="text-muted">We're passionate about creating opportunities and building meaningful connections in the freelance economy.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
+                            <i class="bi bi-shield-check fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Integrity</h5>
+                        <p class="text-muted">We believe in doing what's right, even when no one is watching. Trust is the foundation of our platform.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 70px; height: 70px;">
+                            <i class="bi bi-lightbulb fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Innovation</h5>
+                        <p class="text-muted">We're constantly evolving to meet the changing needs of our community with cutting-edge solutions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Team Section -->
+<section id="our-team" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="badge bg-primary bg-opacity-10 text-primary mb-3">Our Team</span>
+            <h2 class="fw-bold">Meet the Leadership</h2>
+            <p class="lead text-muted">The talented people behind our success</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm overflow-hidden">
+                    <div class="team-img" style="height: 300px; overflow: hidden;">
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="Team Member">
+                    </div>
+                    <div class="card-body text-center p-4">
+                        <h5 class="fw-bold mb-1">Alex Johnson</h5>
+                        <p class="text-primary mb-3">CEO & Founder</p>
+                        <p class="text-muted">With over 15 years in the tech industry, Alex leads our vision and strategic direction.</p>
+                        <div class="d-flex justify-content-center gap-3 mt-3">
+                            <a href="#" class="text-dark"><i class="bi bi-linkedin"></i></a>
+                            <a href="#" class="text-dark"><i class="bi bi-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm overflow-hidden">
+                    <div class="team-img" style="height: 300px; overflow: hidden;">
+                        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="Team Member">
+                    </div>
+                    <div class="card-body text-center p-4">
+                        <h5 class="fw-bold mb-1">Sarah Williams</h5>
+                        <p class="text-primary mb-3">Chief Technology Officer</p>
+                        <p class="text-muted">Sarah leads our engineering team in building secure and scalable solutions.</p>
+                        <div class="d-flex justify-content-center gap-3 mt-3">
+                            <a href="#" class="text-dark"><i class="bi bi-linkedin"></i></a>
+                            <a href="#" class="text-dark"><i class="bi bi-github"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm overflow-hidden">
+                    <div class="team-img" style="height: 300px; overflow: hidden;">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d" class="img-fluid w-100 h-100" style="object-fit: cover;" alt="Team Member">
+                    </div>
+                    <div class="card-body text-center p-4">
+                        <h5 class="fw-bold mb-1">Michael Chen</h5>
+                        <p class="text-primary mb-3">Head of Community</p>
+                        <p class="text-muted">Michael ensures our community remains vibrant, engaged, and supported.</p>
+                        <div class="d-flex justify-content-center gap-3 mt-3">
+                            <a href="#" class="text-dark"><i class="bi bi-linkedin"></i></a>
+                            <a href="#" class="text-dark"><i class="bi bi-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center py-5">
+        <h2 class="fw-bold display-5 mb-4">Ready to join our community?</h2>
+        <p class="lead mb-5">Whether you're looking to hire top talent or start your freelance journey, we've got you covered.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'register' %}?role=client" class="btn btn-light btn-lg">Hire Talent</a>
+            <a href="{% url 'register' %}?role=freelancer" class="btn btn-outline-light btn-lg">Become a Freelancer</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.about-hero {
+    margin-top: -72px;
+    padding-top: 120px;
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+}
+
+.team-img img {
+    transition: transform 0.5s ease;
+}
+
+.team-img:hover img {
+    transform: scale(1.05);
+}
+
+.icon-box {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.badge {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.btn-outline-light:hover {
+    color: var(--primary) !important;
+    background: white;
+}
+</style>
+{% endblock %}

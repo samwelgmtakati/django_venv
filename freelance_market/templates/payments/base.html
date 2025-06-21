@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}{% block head_title %}Payments{% endblock head_title %}{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Payment Center</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'payments:dashboard' %}" 
+                       class="list-group-item list-group-item-action {% if active_page == 'payments_dashboard' %}active{% endif %}">
+                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </a>
+                    <a href="{% url 'payments:transactions' %}" 
+                       class="list-group-item list-group-item-action {% if active_page == 'transactions' %}active{% endif %}">
+                        <i class="fas fa-exchange-alt me-2"></i> Transactions
+                    </a>
+                    <a href="{% url 'payments:withdraw' %}" 
+                       class="list-group-item list-group-item-action {% if active_page == 'withdraw' %}active{% endif %}">
+                        <i class="fas fa-money-bill-wave me-2"></i> Withdraw Funds
+                    </a>
+                    <a href="{% url 'payments:make_payment' %}" 
+                       class="list-group-item list-group-item-action {% if active_page == 'make_payment' %}active{% endif %}">
+                        <i class="fas fa-credit-card me-2"></i> Make a Payment
+                    </a>
+                    <a href="{% url 'payments:payment_methods' %}" 
+                       class="list-group-item list-group-item-action {% if active_page == 'payment_methods' %}active{% endif %}">
+                        <i class="fas fa-wallet me-2"></i> Payment Methods
+                    </a>
+                </div>
+                
+                <!-- Account Balance -->
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Available Balance:</span>
+                        <span class="text-success fw-bold">{{ balance|default:0|floatformat:2 }} TZS</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">{% block page_title %}Payments{% endblock page_title %}</h2>
+                {% block page_actions %}{% endblock page_actions %}
+            </div>
+            
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Page Content -->
+            {% block payment_content %}
+            {% endblock payment_content %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock extra_js %}

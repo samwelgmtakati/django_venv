@@ -1,0 +1,392 @@
+{% extends "dashboard/base.html" %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+
+{% block title %}Make a Payment - {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Make a Payment</h1>
+        <a href="{% url 'payments:transactions' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Transactions
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">Payment Details</h6>
+                </div>
+            <div class="card-body">
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong> Please correct the errors below.
+                    </div>
+                {% endif %}
+                
+                <form method="post" id="paymentForm" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Payment Method Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Select Payment Method</label>
+                        <div class="list-group">
+                            {% for method in payment_methods %}
+                            <label class="list-group-item list-group-item-action">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" 
+                                           id="method-{{ method.id }}" value="{{ method.id }}" 
+                                           {% if forloop.first %}checked{% endif %} required>
+                                </div>
+                                <div class="ms-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-1">
+                                            {% if method.name == 'azampesa' %}
+                                                <i class="fas fa-mobile-alt text-primary me-2"></i>
+                                            {% elif method.name == 'mtn' %}
+                                                <i class="fas fa-sim-card text-warning me-2"></i>
+                                            {% elif method.name == 'tigopesa' %}
+                                                <i class="fas fa-sim-card text-danger me-2"></i>
+                                            {% elif method.name == 'halopesa' %}
+                                                <i class="fas fa-sim-card text-success me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-university text-info me-2"></i>
+                                            {% endif %}
+                                            {{ method.get_name_display }}
+                                        </h6>
+                                        <span class="badge {% if method.is_primary %}bg-primary{% else %}bg-secondary{% endif %}">
+                                            {% if method.is_primary %}Primary{% else %}Secondary{% endif %}
+                                        </span>
+                                    </div>
+                                    <p class="mb-1 small text-muted">{{ method.account_number }}</p>
+                                    <p class="mb-0 small text-muted">{{ method.account_name }}</p>
+                                </div>
+                            </label>
+                            {% empty %}
+                            <div class="alert alert-warning">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <div>
+                                        <p class="mb-0">You don't have any payment methods set up yet.</p>
+                                        <a href="{% url 'payments:add_payment_method' %}" class="btn btn-link btn-sm p-0">
+                                            Add a payment method to continue
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if form.payment_method.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.payment_method.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="text-end mt-2">
+                            <a href="{% url 'payments:add_payment_method' %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-plus me-1"></i> Add New Payment Method
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Amount -->
+                    <div class="mb-4">
+                        <label for="amount" class="form-label fw-bold">Amount (TZS)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">TZS</span>
+                            <input type="number" class="form-control form-control-lg {% if form.amount.errors %}is-invalid{% endif %}" 
+                                   id="amount" name="amount" 
+                                   min="100" 
+                                   step="0.01"
+                                   placeholder="Enter amount"
+                                   required>
+                            {% if form.amount.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.amount.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-text">
+                            Minimum amount: 100 TZS
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label for="description" class="form-label fw-bold">Description</label>
+                        <input type="text" class="form-control {% if form.description.errors %}is-invalid{% endif %}" 
+                               id="description" name="description" 
+                               placeholder="e.g., Payment for services"
+                               maxlength="255"
+                               required>
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.description.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Briefly describe what this payment is for
+                        </div>
+                    </div>
+                    
+                    <!-- Reference/Invoice Number -->
+                    <div class="mb-4">
+                        <label for="reference" class="form-label fw-bold">Reference/Invoice # (Optional)</label>
+                        <input type="text" class="form-control {% if form.reference.errors %}is-invalid{% endif %}" 
+                               id="reference" name="reference" 
+                               placeholder="e.g., INV-12345">
+                        {% if form.reference.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.reference.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Terms and Conditions -->
+                    <div class="form-check mb-4">
+                        <input class="form-check-input {% if form.terms_accepted.errors %}is-invalid{% endif %}" 
+                               type="checkbox" 
+                               id="terms_accepted" 
+                               name="terms_accepted"
+                               required>
+                        <label class="form-check-label small text-muted" for="terms_accepted">
+                            I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                        </label>
+                        {% if form.terms_accepted.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.terms_accepted.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" {% if not payment_methods %}disabled{% endif %}>
+                            <i class="fas fa-credit-card me-2"></i> Make Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Payment Summary -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Payment Summary</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Amount:</span>
+                    <span id="summary-amount" class="fw-bold">0.00 TZS</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Fee:</span>
+                    <span id="summary-fee" class="fw-bold">0.00 TZS</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Tax:</span>
+                    <span id="summary-tax" class="fw-bold">0.00 TZS</span>
+                </div>
+                <div class="border-top pt-3 mt-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold">Total:</span>
+                        <span id="summary-total" class="fw-bold fs-5">0.00 TZS</span>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-4 mb-0">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <div>
+                            <p class="mb-0 small">
+                                Your payment will be processed securely. A receipt will be sent to your email.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Payments -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Recent Payments</h6>
+                <a href="{% url 'payments:transactions' %}" class="btn btn-link btn-sm p-0">View All</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_payments %}
+                    <div class="list-group list-group-flush">
+                        {% for payment in recent_payments|slice:":5" %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ payment.description|truncatechars:20 }}</h6>
+                                    <small class="text-muted">{{ payment.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold">{{ payment.amount|floatformat:2|intcomma }} TZS</div>
+                                    <span class="badge {% if payment.status == 'completed' %}bg-success{% elif payment.status == 'pending' %}bg-warning text-dark{% else %}bg-danger{% endif %} small">
+                                        {{ payment.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-credit-card fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No recent payments</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Payment Terms and Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Payment Processing</h6>
+                <p class="small text-muted">
+                    All payments are processed securely. By making a payment, you authorize us to charge the selected payment method for the specified amount.
+                </p>
+                
+                <h6>2. Currency</h6>
+                <p class="small text-muted">
+                    All transactions are processed in Tanzanian Shillings (TZS). If your payment method is in a different currency, the amount will be converted at the current exchange rate, and additional fees may apply.
+                </p>
+                
+                <h6>3. Refund Policy</h6>
+                <p class="small text-muted">
+                    Refunds are processed within 5-10 business days. The refund amount will be credited back to the original payment method used for the transaction.
+                </p>
+                
+                <h6>4. Security</h6>
+                <p class="small text-muted">
+                    We use industry-standard encryption to protect your payment information. Your payment details are never stored on our servers.
+                </p>
+                
+                <h6>5. Disputes</h6>
+                <p class="small text-muted">
+                    For any disputes or questions about your payment, please contact our support team within 30 days of the transaction date.
+                </p>
+                
+                <div class="alert alert-warning small mb-0 mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    By proceeding with the payment, you agree to these terms and conditions.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal" onclick="document.getElementById('terms_accepted').checked = true;">
+                    I Agree
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script nonce="{{ request.csp_nonce }}">
+document.addEventListener("DOMContentLoaded", function() {
+    // Format amount input as user types
+    const amountInput = document.getElementById('amount');
+    const summaryAmount = document.getElementById('summary-amount');
+    const summaryFee = document.getElementById('summary-fee');
+    const summaryTax = document.getElementById('summary-tax');
+    const summaryTotal = document.getElementById('summary-total');
+    
+    // Calculate fees and update summary
+    function updatePaymentSummary(amount) {
+        if (!amount) amount = 0;
+        
+        // Calculate fee (example: 2.5% or minimum 100 TZS)
+        const fee = Math.max(amount * 0.025, 100);
+        // Calculate tax (example: 18% of fee)
+        const tax = fee * 0.18;
+        const total = parseFloat(amount) + fee + tax;
+        
+        // Update summary
+        if (summaryAmount) summaryAmount.textContent = parseFloat(amount).toFixed(2) + ' TZS';
+        if (summaryFee) summaryFee.textContent = fee.toFixed(2) + ' TZS';
+        if (summaryTax) summaryTax.textContent = tax.toFixed(2) + ' TZS';
+        if (summaryTotal) summaryTotal.textContent = total.toFixed(2) + ' TZS';
+    }
+    
+    // Update summary when amount changes
+    if (amountInput) {
+        amountInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^0-9.]/g, '');
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
+            e.target.value = value;
+            
+            // Update payment summary
+            updatePaymentSummary(parseFloat(value) || 0);
+        });
+        
+        // Initial update
+        updatePaymentSummary(parseFloat(amountInput.value) || 0);
+    }
+    
+    // Form validation
+    const form = document.getElementById('paymentForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+            
+            // Additional validation
+            const amount = parseFloat(amountInput.value) || 0;
+            if (amount < 100) {
+                e.preventDefault();
+                amountInput.setCustomValidity('Minimum payment amount is 100 TZS');
+                amountInput.reportValidity();
+                return false;
+            }
+            
+            // Show processing message
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+            }
+            
+            return true;
+        });
+    }
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Auto-format amount on blur
+    if (amountInput) {
+        amountInput.addEventListener('blur', function() {
+            if (this.value) {
+                this.value = parseFloat(this.value).toFixed(2);
+            }
+        });
+    }
+});
+</script>
+{% endblock extra_js %}

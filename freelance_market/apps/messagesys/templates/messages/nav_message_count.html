@@ -1,0 +1,12 @@
+{% load static %}
+
+<span class="position-relative">
+    <i class="bi bi-chat-dots fs-4 {% if unread_count > 0 %}text-warning{% else %}text-white{% endif %}"></i>
+    {% if unread_count > 0 %}
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            {{ unread_count }}
+            <span class="visually-hidden">unread messages</span>
+        </span>
+    {% endif %}
+    <span class="small text-white-50">Messages</span>
+</span>

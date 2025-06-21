@@ -1,0 +1,36 @@
+<div class="p-4 {% if not forloop.last or not forloop.first %}border-bottom{% endif %}" id="review-{{ review.id }}">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center">
+            <div class="avatar avatar-sm me-3">
+                <span class="avatar-initial 
+                    {% if review.is_client_review %}bg-primary{% else %}bg-success{% endif %} 
+                    rounded-circle">
+                    {{ review.reviewer.get_full_name|first|default:review.reviewer.username|first|upper }}
+                </span>
+            </div>
+            <div>
+                <h6 class="mb-0">{{ review.reviewer.get_full_name|default:review.reviewer.username }} 
+                    ({% if review.is_client_review %}Client{% else %}Freelancer{% endif %})
+                </h6>
+                <small class="text-muted">{{ review.created_at|timesince }} ago</small>
+            </div>
+        </div>
+        <div class="star-rating" data-rating="{{ review.rating }}">
+            {% with ''|center:5 as range %}
+            {% for _ in range %}
+                {% if forloop.counter <= review.rating %}
+                    <i class="fas fa-star text-warning"></i>
+                {% else %}
+                    <i class="far fa-star text-warning"></i>
+                {% endif %}
+            {% endfor %}
+            {% endwith %}
+            <span class="visually-hidden">Rating: {{ review.rating }}/5</span>
+        </div>
+    </div>
+    {% if review.comment %}
+        <div class="review-comment mt-3">
+            <p class="mb-0">{{ review.comment|linebreaksbr }}</p>
+        </div>
+    {% endif %}
+</div>

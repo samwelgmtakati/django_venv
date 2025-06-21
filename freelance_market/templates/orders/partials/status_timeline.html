@@ -1,0 +1,169 @@
+
+<div class="timeline-steps">
+    <!-- Order Created -->
+    <div class="timeline-step {% if order.status != 'cancelled' %}completed{% endif %}">
+        <div class="timeline-icon">
+            <i class="fas fa-shopping-cart"></i>
+        </div>
+        <h6 class="timeline-step-title">Order Placed</h6>
+        <p class="timeline-step-text small">{{ order.created_at|date:"M d, Y" }}</p>
+    </div>
+
+    <!-- In Progress -->
+    <div class="timeline-step {% if order.status in 'in_progress,delivered,revision_requested,approved' %}completed{% endif %}">
+        <div class="timeline-icon">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <h6 class="timeline-step-title">In Progress</h6>
+        {% if order.started_at %}
+            <p class="timeline-step-text small">Started {{ order.started_at|timesince }} ago</p>
+        {% endif %}
+    </div>
+
+    <!-- Delivered -->
+    <div class="timeline-step {% if order.status in 'delivered,revision_requested,approved' %}completed{% endif %}">
+        <div class="timeline-icon">
+            <i class="fas fa-paper-plane"></i>
+        </div>
+        <h6 class="timeline-step-title">Delivered</h6>
+        {% if order.delivered_at %}
+            <p class="timeline-step-text small">{{ order.delivered_at|timesince }} ago</p>
+        {% endif %}
+    </div>
+
+    <!-- Revision Requested (conditional) -->
+    {% if order.revision_count > 0 %}
+    <div class="timeline-step {% if order.status == 'approved' or order.status == 'in_progress' %}completed{% endif %}">
+        <div class="timeline-icon">
+            <i class="fas fa-redo"></i>
+        </div>
+        <h6 class="timeline-step-title">Revision Requested</h6>
+        {% if order.last_revision_requested_at %}
+            <p class="timeline-step-text small">
+                {{ order.revision_count }} revision{{ order.revision_count|pluralize }}
+            </p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Completed -->
+    <div class="timeline-step {% if order.status == 'approved' %}completed{% endif %}">
+        <div class="timeline-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h6 class="timeline-step-title">Completed</h6>
+        {% if order.completed_at %}
+            <p class="timeline-step-text small">{{ order.completed_at|date:"M d, Y" }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.timeline-steps {
+    display: flex;
+    justify-content: space-between;
+    padding: 2rem 0;
+    position: relative;
+}
+
+.timeline-steps::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e9ecef;
+    z-index: 0;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.timeline-step.completed {
+    opacity: 1;
+}
+
+.timeline-step.completed .timeline-icon {
+    background-color: #198754;
+    color: white;
+    border-color: #198754;
+}
+
+.timeline-step.completed .timeline-step-title {
+    color: #198754;
+}
+
+.timeline-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    color: #6c757d;
+    font-size: 1.25rem;
+}
+
+.timeline-step-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    text-align: center;
+    color: #6c757d;
+}
+
+.timeline-step-text {
+    color: #6c757d;
+    text-align: center;
+    font-size: 0.75rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .timeline-steps {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem 0 1rem 2rem;
+    }
+    
+    .timeline-steps::before {
+        width: 2px;
+        height: 100%;
+        left: 1.5rem;
+        top: 0;
+    }
+    
+    .timeline-step {
+        flex-direction: row;
+        margin-bottom: 1.5rem;
+        width: 100%;
+        text-align: left;
+    }
+    
+    .timeline-icon {
+        margin-right: 1rem;
+        margin-bottom: 0;
+    }
+    
+    .timeline-content {
+        flex: 1;
+    }
+    
+    .timeline-step-title,
+    .timeline-step-text {
+        text-align: left;
+    }
+}
+</style>

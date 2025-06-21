@@ -1,0 +1,74 @@
+{% extends 'payments/base.html' %}
+
+{% block page_title %}Transaction History{% endblock %}
+
+{% block page_actions %}
+    <button class="btn btn-outline-secondary me-2" disabled>
+        <i class="bi bi-download me-1"></i> Export
+    </button>
+{% endblock %}
+
+{% block payment_content %}
+<div class="card">
+    <div class="card-body">
+        <!-- Filters -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-2">
+                <select class="form-select form-select-sm">
+                    <option>All Transactions</option>
+                    <option>Completed</option>
+                    <option>Pending</option>
+                    <option>Refunded</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-2">
+                <input type="date" class="form-control form-control-sm" placeholder="From Date">
+            </div>
+            <div class="col-md-3 mb-2">
+                <input type="date" class="form-control form-control-sm" placeholder="To Date">
+            </div>
+            <div class="col-md-3 mb-2">
+                <button class="btn btn-sm btn-primary w-100">
+                    <i class="bi bi-funnel me-1"></i> Filter
+                </button>
+            </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Invoice</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-receipt h1 d-block mb-3"></i>
+                            No transactions found
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav aria-label="Transaction pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item" aria-current="page">
+                    <a class="page-link" href="#">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}

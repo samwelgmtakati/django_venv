@@ -1,0 +1,56 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Leave Review{% endblock %}
+{% block content %}
+<h2>Leave a Review for Order #{{ order.id }}</h2>
+<form method="post">
+  {% csrf_token %}
+  <style>
+.star-rating {
+  direction: rtl;
+  font-size: 1.75rem;
+  unicode-bidi: bidi-override;
+  display: inline-block;
+}
+.star-rating input[type="radio"] {
+  display: none;
+}
+.star-rating label {
+  color: #d3d3d3; /* Light grey by default */
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0 2px;
+}
+/* Hover effect - color stars on hover */
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+  color: #ffc107; /* Yellow on hover */
+}
+/* Selected stars - keep colored after selection */
+.star-rating input[type="radio"]:checked ~ label {
+  color: #ffc107; /* Yellow for selected and all previous stars */
+}
+/* Reset stars after the selected one */
+.star-rating input[type="radio"]:checked + label ~ label {
+  color: #d3d3d3; /* Grey for stars after the selected one */
+}
+/* Keep hover effect working after selection */
+.star-rating:hover input[type="radio"]:checked ~ label {
+  color: #ffc107; /* Keep all stars yellow when hovering after selection */
+}
+</style>
+<div class="mb-3">
+  <label class="form-label d-block">Rating</label>
+  <div class="star-rating">
+    {% for i in "54321" %}
+      <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}">
+      <label for="star{{ i }}" class="bi bi-star-fill"></label>
+    {% endfor %}
+  </div>
+</div>
+  <div class="mb-3">
+    <label class="form-label">Comment (optional)</label>
+    {{ form.comment }}
+  </div>
+  <button type="submit" class="btn btn-primary">Submit Review</button>
+</form>
+{% endblock %}

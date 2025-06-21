@@ -1,0 +1,280 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Admin Dashboard - Freelance Market{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'dashboard/css/admin-dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Admin Dashboard</h1>
+            <div class="section-actions">
+                <a href="/admin/" class="btn btn-primary">
+                    <i class="fas fa-cog fa-sm me-1"></i> Admin Panel
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row">
+            <!-- Total Users Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="stat-label">Total Users</h6>
+                                <h3 class="stat-value">{{ total_users|default:0 }}</h3>
+                            </div>
+                            <div class="stat-icon bg-primary-light">
+                                <i class="fas fa-users text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Projects Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="stat-label">Active Projects</h6>
+                                <h3 class="stat-value">{{ active_projects_count|default:0 }}</h3>
+                            </div>
+                            <div class="stat-icon bg-success-light">
+                                <i class="fas fa-tasks text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Users This Week Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="stat-label">New Users (Week)</h6>
+                                <h3 class="stat-value">{{ new_users_this_week|default:0 }}</h3>
+                            </div>
+                            <div class="stat-icon bg-info-light">
+                                <i class="fas fa-user-plus text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Revenue Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="stat-label">Total Revenue</h6>
+                                <h3 class="stat-value">TZS {{ total_revenue|default:"0.00"|floatformat:2|intcomma }}</h3>
+                            </div>
+                            <div class="stat-icon bg-warning-light">
+                                <i class="fas fa-money-bill-wave text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Section -->
+        <div class="row mt-4">
+            <!-- Freelancers Card -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-5">
+                        <div class="icon-shape icon-shape-primary rounded-4 mb-4">
+                            <i class="fas fa-user-tie fa-2x text-white"></i>
+                        </div>
+                        <h3 class="h5 mb-3">Freelancers</h3>
+                        <p class="text-muted mb-4">Manage all freelancers in the platform, view their profiles, and monitor their activity.</p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'dashboard:admin_freelancers_list' %}" class="btn btn-primary">
+                                <i class="fas fa-users me-2"></i> View All Freelancers
+                            </a>
+                            <span class="badge bg-primary-soft text-primary align-self-center">
+                                {{ freelancers_total_count|default:0 }} Total
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients Card -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-5">
+                        <div class="icon-shape icon-shape-success rounded-4 mb-4">
+                            <i class="fas fa-briefcase fa-2x text-white"></i>
+                        </div>
+                        <h3 class="h5 mb-3">Clients</h3>
+                        <p class="text-muted mb-4">Manage all clients, view their projects, and monitor their activity on the platform.</p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'dashboard:admin_clients_list' %}" class="btn btn-success">
+                                <i class="fas fa-users me-2"></i> View All Clients
+                            </a>
+                            <span class="badge bg-success-soft text-success align-self-center">
+                                {{ clients_total_count|default:0 }} Total
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Row -->
+        <div class="row">
+            <!-- Recent Activity -->
+            <div class="col-lg-8 mb-4">
+                <div class="card shadow mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="m-0">Recent Activity</h6>
+                        <a href="/admin/" class="btn btn-sm btn-link p-0">View All</a>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_activity %}
+                            <div class="list-group">
+                                {% for activity in recent_activity|slice:":5" %}
+                                    <div class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">{{ activity.title|default:"New Activity" }}</h6>
+                                            <small class="text-muted">
+                                                {% if activity.timestamp %}
+                                                    {{ activity.timestamp|timesince }} ago
+                                                {% else %}
+                                                    Just now
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <p class="mb-1">{{ activity.description|default:"No description available" }}</p>
+                                        {% if activity.user %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-user me-1"></i> {{ activity.user.username }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-inbox fa-3x text-gray-300 mb-3"></i>
+                                <p class="text-muted">No recent activity to display</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="col-lg-4 mb-4">
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <h6 class="m-0">Quick Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ admin_urls.index }}" class="btn btn-primary btn-block text-start">
+                                <i class="fas fa-cog me-2"></i> Admin Panel
+                            </a>
+                            <a href="{{ admin_urls.user_add }}" class="btn btn-success btn-block text-start">
+                                <i class="fas fa-user-plus me-2"></i> Add New User
+                            </a>
+                            <a href="{{ admin_urls.user_changelist }}" class="btn btn-info btn-block text-start">
+                                <i class="fas fa-users me-2"></i> Manage Users
+                            </a>
+                            <a href="{{ admin_urls.userprofile_changelist }}" class="btn btn-warning btn-block text-start">
+                                <i class="fas fa-id-card me-2"></i> User Profiles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Summary -->
+                <div class="card shadow mb-4">
+                    <div class="card-header">
+                        <h6 class="m-0">Statistics Summary</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Clients</span>
+                                <span class="fw-bold">{{ clients_count|default:0 }}</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-primary" role="progressbar" 
+                                     style="width: {{ clients_count|default:0 }}%" 
+                                     aria-valuenow="{{ clients_count|default:0 }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Freelancers</span>
+                                <span class="fw-bold">{{ freelancers_count|default:0 }}</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ freelancers_count|default:0 }}%" 
+                                     aria-valuenow="{{ freelancers_count|default:0 }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Completed Projects</span>
+                                <span class="fw-bold">{{ completed_projects_count|default:0 }}</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-info" role="progressbar" 
+                                     style="width: {{ completed_projects_count|default:0 }}%" 
+                                     aria-valuenow="{{ completed_projects_count|default:0 }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Update active sidebar item
+        document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        const dashboardLink = document.querySelector('.sidebar-nav .nav-link[href="{% url 'dashboard:admin_dashboard' %}"]');
+        if (dashboardLink) {
+            dashboardLink.classList.add('active');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,384 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}{{ freelancer.user.get_full_name|default:freelancer.user.username }} - Freelancer Profile{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border: 4px solid white;
+        border-radius: 50%;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .availability-badge {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+    }
+    .skill-badge {
+        margin: 0.2rem;
+        font-size: 0.9rem;
+        padding: 0.35rem 0.8rem;
+    }
+    .profile-section {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .section-title {
+        color: #2c3e50;
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.25rem;
+        font-weight: 600;
+    }
+    .contact-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+    }
+    .social-links a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #f8f9fa;
+        color: #2c3e50;
+        margin-right: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    .social-links a:hover {
+        background: #2575fc;
+        color: white;
+        transform: translateY(-3px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Profile Header -->
+    <div class="profile-header text-center position-relative">
+        <div class="container">
+            <img src="{{ freelancer.user.profile_picture.url|default:'/static/images/default-avatar.png' }}" 
+                 alt="{{ freelancer.user.get_full_name|default:freelancer.user.username }}" 
+                 class="profile-avatar mb-3">
+            <h1 class="h2 mb-2">{{ freelancer.user.get_full_name|default:freelancer.user.username }}</h1>
+            <p class="h5 mb-3 opacity-75">{{ freelancer.title|default:"Professional Freelancer" }}</p>
+            
+            <div class="d-flex justify-content-center gap-3 mb-3">
+                {% if freelancer.is_available %}
+                <span class="badge bg-success bg-opacity-25 border border-success border-opacity-25 px-3 py-2">
+                    <i class="bi bi-check-circle-fill me-1"></i> Available for work
+                </span>
+                {% else %}
+                <span class="badge bg-secondary bg-opacity-25 border border-secondary border-opacity-25 px-3 py-2">
+                    <i class="bi bi-pause-circle-fill me-1"></i> Not available
+                </span>
+                {% endif %}
+                
+                {% if freelancer.hourly_rate %}
+                <span class="badge bg-white text-dark bg-opacity-75 border-0 px-3 py-2">
+                    <i class="bi bi-currency-exchange me-1"></i> TZS {{ freelancer.hourly_rate|floatformat:0 }}/hr
+                </span>
+                {% endif %}
+            </div>
+            
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <a href="#contact" class="btn btn-light btn-lg contact-btn">
+                    <i class="bi bi-envelope-fill"></i> Contact Me
+                </a>
+                {% if freelancer.portfolio_website %}
+                <a href="{{ freelancer.portfolio_website }}" target="_blank" class="btn btn-outline-light btn-lg contact-btn">
+                    <i class="bi bi-globe"></i> Portfolio
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-4">
+            <!-- About -->
+            <div class="profile-section">
+                <h3 class="section-title">About Me</h3>
+                {% if freelancer.bio %}
+                    {{ freelancer.bio|linebreaks }}
+                {% else %}
+                    <p class="text-muted">No bio provided.</p>
+                {% endif %}
+                
+                <div class="mt-4">
+                    {% if freelancer.experience_years %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-award text-primary"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="mb-0">Experience</h6>
+                            <p class="mb-0 text-muted">{{ freelancer.experience_years }}+ years</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if freelancer.education %}
+                    <div class="d-flex align-items-center">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-mortarboard text-primary"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="mb-0">Education</h6>
+                            <p class="mb-0 text-muted">{{ freelancer.education|truncatewords:8 }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Skills -->
+            <div class="profile-section">
+                <h3 class="section-title">Skills & Expertise</h3>
+                {% if freelancer.skills.all %}
+                    <div class="d-flex flex-wrap">
+                        {% for skill in freelancer.skills.all %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary skill-badge mb-2">
+                                {{ skill.name }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-0">No skills listed.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Contact -->
+            <div class="profile-section" id="contact">
+                <h3 class="section-title">Contact</h3>
+                <div class="mb-3">
+                    <a href="mailto:{{ freelancer.user.email }}" class="text-decoration-none d-flex align-items-center mb-3">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                            <i class="bi bi-envelope text-primary"></i>
+                        </div>
+                        <span>{{ freelancer.user.email }}</span>
+                    </a>
+                </div>
+                
+                <div class="social-links mt-4">
+                    <a href="#" data-bs-toggle="tooltip" title="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                    <a href="#" data-bs-toggle="tooltip" title="GitHub"><i class="bi bi-github"></i></a>
+                    <a href="#" data-bs-toggle="tooltip" title="Twitter"><i class="bi bi-twitter"></i></a>
+                    <a href="#" data-bs-toggle="tooltip" title="Website"><i class="bi bi-globe"></i></a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column -->
+        <div class="col-lg-8">
+            <!-- Rating & Reviews -->
+            <div class="profile-section">
+                <h3 class="section-title">
+                    Reviews
+                    {% if total_reviews %}
+                        <span class="badge bg-primary bg-opacity-10 text-primary ms-2">{{ total_reviews }} review{{ total_reviews|pluralize }}</span>
+                    {% endif %}
+                </h3>
+                
+                {% if total_reviews > 0 %}
+                    <div class="row align-items-center mb-4">
+                        <div class="col-md-3 text-center">
+                            <div class="display-4 fw-bold text-primary mb-1">{{ avg_rating|floatformat:1 }}</div>
+                            <div class="star-rating mb-2">
+                                {% for i in '12345' %}
+                                    {% if forloop.counter <= avg_rating|floatformat:0 %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <div class="text-muted small">Based on {{ total_reviews }} review{{ total_reviews|pluralize }}</div>
+                        </div>
+                        <div class="col-md-9">
+                            {% for rating, count in rating_counts.items %}
+                                <div class="row align-items-center mb-2">
+                                    <div class="col-2 text-end pe-0">
+                                        <span class="small">{{ rating }} <i class="fas fa-star text-warning"></i></span>
+                                    </div>
+                                    <div class="col-7 px-0">
+                                        <div class="progress" style="height: 8px;">
+                                            {% widthratio count total_reviews 100 as width %}
+                                            <div class="progress-bar bg-warning" role="progressbar" 
+                                                 style="width: {{ width|default:0 }}%" 
+                                                 aria-valuenow="{{ width|default:0 }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3 ps-2">
+                                        <span class="small text-muted">{{ count }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Reviews List -->
+                    <div class="reviews-list">
+                        {% for review in reviews %}
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <div>
+                                            <h6 class="mb-0">
+                                                {{ review.reviewer.get_full_name|default:review.reviewer.username }}
+                                                <small class="text-muted ms-2">{{ review.created_at|timesince }} ago</small>
+                                            </h6>
+                                        </div>
+                                        <div class="star-rating">
+                                            {% for i in '12345' %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                {% else %}
+                                                    <i class="far fa-star text-warning"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% if review.comment %}
+                                        <p class="mb-0">{{ review.comment|linebreaksbr }}</p>
+                                    {% else %}
+                                        <p class="text-muted mb-0">No comment provided.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if total_reviews > 5 %}
+                        <div class="text-center mt-3">
+                            <a href="#" class="btn btn-outline-primary">
+                                View All Reviews <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No reviews yet. Be the first to review this freelancer!</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Portfolio/Work Samples -->
+            <div class="profile-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="section-title mb-0">Portfolio</h3>
+                    {% if freelancer.portfolio_website %}
+                    <a href="{{ freelancer.portfolio_website }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        View All Work <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <div class="row g-3">
+                    {% for i in "123"|make_list %}
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="ratio ratio-16x9 bg-light">
+                                <div class="d-flex align-items-center justify-content-center text-muted">
+                                    <i class="bi bi-image" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title mb-1">Project Title {{ i }}</h5>
+                                <p class="card-text text-muted small">Brief description of the project and the work done.</p>
+                                <a href="#" class="btn btn-sm btn-outline-primary">View Project</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if not freelancer.portfolio_website %}
+                <div class="text-center mt-4">
+                    <p class="text-muted">No portfolio items available.</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Testimonials -->
+            <div class="profile-section">
+                <h3 class="section-title">Client Testimonials</h3>
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <div class="d-flex mb-3">
+                                    <div class="flex-shrink-0">
+                                        <img src="https://ui-avatars.com/api/?name=Client+Name&background=0D6EFD&color=fff" 
+                                             class="rounded-circle" width="50" height="50" alt="Client">
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">Client Name</h6>
+                                        <div class="text-warning small">
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                            <i class="bi bi-star-fill"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="card-text">"{{ freelancer.user.get_full_name|default:freelancer.user.username }} delivered exceptional work on our project. Highly recommended for their professionalism and expertise."</p>
+                                <p class="text-muted small mb-0">Project: Web Development</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-chat-left-quote me-1"></i> Leave a Review
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

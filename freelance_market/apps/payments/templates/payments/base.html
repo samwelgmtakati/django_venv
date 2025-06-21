@@ -1,0 +1,25 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Payments - {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0">{% block page_title %}Payments{% endblock page_title %}</h2>
+        {% block page_actions %}{% endblock page_actions %}
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            {% block payment_content %}
+            <!-- Main content will be here -->
+            {% endblock payment_content %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+{{ block.super }}
+<!-- Add any payment-specific JavaScript here -->
+{% endblock extra_js %}

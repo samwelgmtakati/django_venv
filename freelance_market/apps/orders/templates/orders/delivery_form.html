@@ -1,0 +1,86 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Deliver Work | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+<!-- Main Form Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">
+                                <i class="fas fa-file-upload me-2"></i>
+                                Deliver Work
+                            </h4>
+                            <p class="mb-0 small">Order #{{ order.id }} - {{ order.title }}</p>
+                        </div>
+                        <a href="{% url 'orders:detail' order.pk %}" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Order
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- File Upload -->
+                        <div class="mb-4">
+                            <label for="{{ form.file.id_for_label }}" class="form-label fw-bold">
+                                {{ form.file.label }}
+                                {% if form.file.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.file }}
+                            {% if form.file.help_text %}
+                                <div class="form-text">{{ form.file.help_text }}</div>
+                            {% endif %}
+                            {% if form.file.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.file.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Message -->
+                        <div class="mb-4">
+                            <label for="{{ form.message.id_for_label }}" class="form-label fw-bold">
+                                {{ form.message.label }}
+                                {% if form.message.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.message }}
+                            {% if form.message.help_text %}
+                                <div class="form-text">{{ form.message.help_text }}</div>
+                            {% endif %}
+                            {% if form.message.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.message.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane me-2"></i> Submit Delivery
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Main Form Card -->
+        </div>
+    </div>
+</div>
+{% endblock %}

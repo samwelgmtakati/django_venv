@@ -1,0 +1,21 @@
+# Ignore all Django template files
+templates/
+**/templates/
+
+# Optional: ignore all HTML files (if not used in frontend builds)
+*.html
+
+# Optional: ignore individual app templates
+apps/accounts/templates/
+apps/dashboard/templates/
+apps/jobs/templates/
+apps/services/templates/
+apps/orders/templates/
+apps/messagesys/templates/
+apps/payments/templates/
+apps/reviews/templates/
+
+# Ignore migrations and compiled files
+**/migrations/
+**/__pycache__/
+*.pyc

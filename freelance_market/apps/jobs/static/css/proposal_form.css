@@ -1,0 +1,185 @@
+/* Proposal Form Styling */
+
+/* Form container */
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    font-weight: 600;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Form elements */
+.form-control, .form-select {
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    border: 1px solid #dee2e6;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+textarea.form-control {
+    min-height: 150px;
+    resize: vertical;
+}
+
+/* File upload area */
+.file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.375rem;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: #86b7fe;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.file-upload-area.highlight {
+    border-color: #86b7fe;
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+/* File list */
+#file-list .list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: 0.75rem 1.25rem;
+}
+
+#file-list .list-group-item:first-child {
+    border-top: none;
+}
+
+#file-list .list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Buttons */
+.btn {
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.btn-outline-secondary {
+    color: #6c757d;
+    border-color: #dee2e6;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+}
+
+/* Job summary */
+.job-summary {
+    border-left: 3px solid #0d6efd;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .d-flex.justify-content-between {
+        flex-direction: column;
+    }
+    
+    .d-flex.justify-content-between .btn {
+        margin-bottom: 0.75rem;
+    }
+    
+    .d-flex.justify-content-between .btn:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* Loading spinner */
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
+}
+
+.spinner-border {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    vertical-align: -0.125em;
+    border: 0.2em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+/* Word count */
+#word-count {
+    font-weight: 600;
+}
+
+/* Invalid feedback */
+.invalid-feedback {
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}
+
+/* Form text */
+.form-text {
+    font-size: 0.8125rem;
+    color: #6c757d;
+}
+
+/* Tips section */
+.card:last-child {
+    margin-top: 1.5rem;
+}
+
+.card:last-child .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.card:last-child ul {
+    margin-bottom: 0;
+    padding-left: 1.25rem;
+}
+
+.card:last-child li {
+    margin-bottom: 0.5rem;
+}
+
+.card:last-child li:last-child {
+    margin-bottom: 0;
+}

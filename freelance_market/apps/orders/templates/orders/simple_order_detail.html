@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order #{{ order.id }}</title>
+</head>
+<body>
+    <h1>Order #{{ order.id }}</h1>
+    <p>Status: {{ order.status }}</p>
+    <p>Status Display: {{ order.get_status_display }}</p>
+    <p>Job Title: {{ order.job.title }}</p>
+    
+    <h2>Debug Info</h2>
+    <pre>{{ debug_info|pprint }}</pre>
+    
+    <h2>Order Object</h2>
+    <pre>{% for k, v in order.__dict__.items %}{{ k }}: {{ v }}
+{% endfor %}</pre>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div class="app-freelance_market module">
+    <table>
+        <caption>
+            <a href="{% url 'admin:index' %}" class="section" title="Freelance Market">Freelance Market</a>
+        </caption>
+        <tr class="model-group">
+            <th scope="row"><a href="{% url 'admin:accounts_user_changelist' %}">Users</a></th>
+            <td><a href="{% url 'admin:accounts_user_add' %}" class="addlink">Add</a></td>
+            <td><a href="{% url 'admin:accounts_user_changelist' %}" class="changelink">Change</a></td>
+        </tr>
+        <tr class="model-group">
+            <th scope="row"><a href="{% url 'admin:accounts_userprofile_changelist' %}">User Profiles</a></th>
+            <td><a href="{% url 'admin:accounts_userprofile_add' %}" class="addlink">Add</a></td>
+            <td><a href="{% url 'admin:accounts_userprofile_changelist' %}" class="changelink">Change</a></td>
+        </tr>
+    </table>
+</div>
+
+{{ block.super }}
+{% endblock %}

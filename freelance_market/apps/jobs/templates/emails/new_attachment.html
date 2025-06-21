@@ -1,0 +1,99 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<tr>
+    <td style="padding: 20px 30px 40px 30px;" class="email-body">
+        <table width="100%">
+            <!-- Greeting -->
+            <tr>
+                <td style="padding: 0 0 20px 0;">
+                    <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 700; color: #333333;">
+                        New Attachment Added to Proposal
+                    </h1>
+                    <p style="margin: 0; font-size: 16px; color: #666666; line-height: 24px;">
+                        Hello {{ recipient_name }},
+                    </p>
+                </td>
+            </tr>
+
+            <!-- Message -->
+            <tr>
+                <td style="padding: 0 0 25px 0;">
+                    <p style="margin: 0 0 15px 0; font-size: 16px; color: #666666; line-height: 24px;">
+                        <strong>{{ freelancer_name }}</strong> has added a new attachment to their proposal for the job:
+                    </p>
+                    <p style="margin: 0 0 15px 0; font-size: 16px; color: #666666; line-height: 24px; font-weight: 600;">
+                        "{{ job_title }}"
+                    </p>
+                </td>
+            </tr>
+
+            <!-- Attachment Details -->
+            <tr>
+                <td style="background-color: #f9f9f9; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
+                    <table width="100%" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td style="padding: 0 0 10px 0; font-weight: 600; color: #333333; width: 120px;">
+                                File Name:
+                            </td>
+                            <td style="padding: 0 0 10px 0; color: #666666;">
+                                {{ attachment_name }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0 0 10px 0; font-weight: 600; color: #333333;">
+                                File Size:
+                            </td>
+                            <td style="padding: 0 0 10px 0; color: #666666;">
+                                {{ attachment_size }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0 0 0 0; font-weight: 600; color: #333333;">
+                                File Type:
+                            </td>
+                            <td style="padding: 0 0 0 0; color: #666666;">
+                                {{ attachment_type }}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Action Button -->
+            <tr>
+                <td style="padding: 0 0 25px 0;">
+                    <table cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td align="center" bgcolor="#4e73df" style="border-radius: 4px;">
+                                <a href="{{ job_url }}" target="_blank" style="display: inline-block; padding: 12px 25px; font-size: 16px; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: 600; background-color: #4e73df;">
+                                    View Proposal & Attachment
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Additional Info -->
+            <tr>
+                <td style="padding: 0 0 20px 0;">
+                    <p style="margin: 0; font-size: 14px; color: #999999; line-height: 22px;">
+                        You can view and download the attachment by clicking the button above or by visiting the proposal page directly.
+                    </p>
+                </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+                <td style="padding: 20px 0 0 0; border-top: 1px solid #eeeeee;">
+                    <p style="margin: 0; font-size: 14px; color: #999999; line-height: 22px;">
+                        If you did not expect to receive this email, please contact our support team at 
+                        <a href="mailto:{{ contact_email }}" style="color: #4e73df; text-decoration: none;">{{ contact_email }}</a>.
+                    </p>
+                </td>
+            </tr>
+        </table>
+    </td>
+</tr>
+{% endblock %}

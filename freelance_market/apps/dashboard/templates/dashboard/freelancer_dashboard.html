@@ -1,0 +1,929 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Freelancer Dashboard{% endblock title %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'dashboard/css/freelancer-dashboard.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="freelancer-dashboard">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-5">
+            <div class="mb-3 mb-md-0">
+                <h1 class="h2 mb-2">Welcome back, {{ user.get_full_name|default:user.username }}!</h1>
+                <p class="text-muted mb-0">Here's what's happening with your account today</p>
+                <p class="text-muted mb-0">Here's what's happening with your projects today</p>
+            </div>
+            <a href="{% url 'jobs:browse_jobs' %}" class="btn btn-primary px-4">
+                <i class="bi bi-search me-2"></i>Find Work
+            </a>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <h2 class="h5 mb-3">Overview</h2>
+            </div>
+
+            <!-- Earnings Card -->
+            <div class="col-xl-3 col-md-6">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-label">Earnings (Monthly)</div>
+                                <div class="stat-value">TZS 4,200,000</div>
+                                <div class="d-flex align-items-center mt-2">
+                                    <span class="text-success small fw-medium me-2">
+                                        <i class="bi bi-arrow-up"></i> 12.5%
+                                    </span>
+                                    <span class="text-muted small">vs last month</span>
+                                </div>
+                            </div>
+                            <div class="bg-primary bg-opacity-10 p-2 rounded-3">
+                                <i class="bi bi-currency-exchange text-primary fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Projects Card -->
+            <div class="col-xl-3 col-md-6">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-label">Active Projects</div>
+                                <div class="stat-value">4</div>
+                                <div class="text-muted small mt-2">2 in progress</div>
+                            </div>
+                            <div class="bg-success bg-opacity-10 p-2 rounded-3">
+                                <i class="bi bi-briefcase text-success fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Proposals Card -->
+            <div class="col-xl-3 col-md-6">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-label">Active Proposals</div>
+                                <div class="stat-value">8</div>
+                                <div class="mt-2">
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar bg-info progress-65" 
+                                             role="progressbar" 
+                                             aria-valuenow="65" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">65% success rate</small>
+                                </div>
+                            </div>
+                            <div class="bg-info bg-opacity-10 p-2 rounded-3">
+                                <i class="bi bi-file-earmark-text text-info fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rating Card -->
+            <div class="col-xl-3 col-md-6">
+                <div class="card stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-label">Average Rating</div>
+                                <div class="d-flex align-items-center">
+                                    <span class="stat-value me-2">4.8</span>
+                                    <span class="text-muted">/5.0</span>
+                                </div>
+                                <div class="text-warning mt-1">
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-half"></i>
+                                    <span class="text-muted small ms-2">(24)</span>
+                                </div>
+                            </div>
+                            <div class="bg-warning bg-opacity-10 p-2 rounded-3">
+                                <i class="bi bi-star-fill text-warning fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Section -->
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">Active Projects</h2>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="projectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-funnel me-1"></i> Filter
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="projectDropdown">
+                            <li><a class="dropdown-item active" href="#">All Projects</a></li>
+                            <li><a class="dropdown-item" href="#">In Progress</a></li>
+                            <li><a class="dropdown-item" href="#">In Review</a></li>
+                            <li><a class="dropdown-item" href="#">Completed</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Project Card 1 -->
+            <div class="col-lg-6">
+                <div class="card project-card h-100">
+                    <div class="card-header bg-transparent border-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="project-title mb-1">E-commerce Website Development</h5>
+                                <div class="project-client">
+                                    <i class="bi bi-building"></i>
+                                    <span>TechCorp Inc.</span>
+                                </div>
+                            </div>
+                            <span class="badge bg-warning bg-opacity-10 text-warning">In Progress</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="project-description">
+                            Building a full-featured e-commerce platform with React and Node.js, including payment integration and admin dashboard.
+                        </p>
+                        <div class="project-meta">
+                            <div class="meta-item">
+                                <i class="bi bi-calendar"></i>
+                                <span>Due: 15 Jun 2023</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-currency-exchange"></i>
+                                <span>TZS 4,500,000</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-check-circle"></i>
+                                <span>65% Complete</span>
+                            </div>
+                        </div>
+                        <div class="project-progress">
+                            <div class="progress progress-thin">
+                                <div class="progress-bar bg-primary progress-65" 
+                                     role="progressbar" 
+                                     aria-valuenow="65" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-group">
+                                    <div class="avatar avatar-xs">
+                                        <img src="https://ui-avatars.com/api/?name=John+Doe" 
+                                             class="rounded-circle" 
+                                             alt="John Doe"
+                                             width="24"
+                                             height="24">
+                                    </div>
+                                    <div class="avatar avatar-xs">
+                                        <img src="https://ui-avatars.com/api/?name=Jane+Smith" 
+                                             class="rounded-circle" 
+                                             alt="Jane Smith"
+                                             width="24"
+                                             height="24">
+                                    </div>
+                                </div>
+                                <span class="ms-2 text-muted small">+2 more</span>
+                            </div>
+                            <a href="#" class="btn btn-sm btn-outline-primary">View Project</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Card 2 -->
+            <div class="col-lg-6">
+                <div class="card project-card h-100">
+                    <div class="card-header bg-transparent border-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="project-title mb-1">Mobile App UI/UX Design</h5>
+                                <div class="project-client">
+                                    <i class="bi bi-building"></i>
+                                    <span>FitLife</span>
+                                </div>
+                            </div>
+                            <span class="badge bg-info bg-opacity-10 text-info">In Review</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="project-description">
+                            Creating modern UI/UX designs for a fitness tracking mobile app with workout plans and progress tracking features.
+                        </p>
+                        <div class="project-meta">
+                            <div class="meta-item">
+                                <i class="bi bi-calendar"></i>
+                                <span>Due: 25 Jun 2023</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-currency-exchange"></i>
+                                <span>TZS 3,200,000</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="bi bi-check-circle"></i>
+                                <span>90% Complete</span>
+                            </div>
+                        </div>
+                        <div class="project-progress">
+                            <div class="progress progress-thin">
+                                <div class="progress-bar bg-info progress-90" 
+                                     role="progressbar" 
+                                     aria-valuenow="90" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs">
+                                    <img src="https://ui-avatars.com/api/?name=Alex+Johnson" 
+                                         class="rounded-circle" 
+                                         alt="Alex Johnson"
+                                         width="24"
+                                         height="24">
+                                </div>
+                                <span class="ms-2 text-muted small">Only you</span>
+                            </div>
+                            <a href="#" class="btn btn-sm btn-outline-primary">View Project</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommended Jobs -->
+            <div class="col-12 mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">Recommended Jobs</h2>
+                    <a href="{% url 'dashboard:find_work' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <a href="#" class="text-decoration-none text-dark">
+                            <div class="job-item p-3 rounded-3 hover-bg-light">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="job-title fw-semibold mb-1">Full Stack Developer - SaaS Platform</h6>
+                                    <span class="badge bg-success bg-opacity-10 text-success">TZS 3,500,000+</span>
+                                </div>
+                                <p class="text-muted small mb-3">Looking for an experienced full stack developer to help build a SaaS platform using React and Django.</p>
+                                <div class="d-flex flex-wrap gap-3">
+                                    <span class="text-muted small"><i class="bi bi-geo-alt text-muted me-1"></i> Remote</span>
+                                    <span class="text-muted small"><i class="bi bi-briefcase text-muted me-1"></i> Full-time</span>
+                                    <span class="text-muted small"><i class="bi bi-clock text-muted me-1"></i> 2h ago</span>
+                                    <span><i class="bi bi-briefcase"></i> Full-time</span>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="#" class="text-decoration-none text-dark">
+                            <div class="job-item p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="job-title">UI/UX Designer for Mobile App</h6>
+                                    <span class="job-price">TZS 2,800,000</span>
+                                </div>
+                                <p class="text-muted small mb-2">Need a creative UI/UX designer to redesign our mobile app interface.</p>
+                                <div class="job-meta">
+                                    <span><i class="bi bi-geo-alt"></i> New York, NY</span>
+                                    <span><i class="bi bi-clock"></i> 5h ago</span>
+                                    <span><i class="bi bi-briefcase"></i> Contract</span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Services Section -->
+        <div class="row g-4 mt-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">My Services</h2>
+                    <div>
+                        <a href="{% url 'services:service_create' %}" class="btn btn-sm btn-outline-primary me-2">
+                            <i class="bi bi-plus-lg me-1"></i>Add Service
+                        </a>
+                        <a href="{% url 'services:service_list' %}" class="btn btn-sm btn-outline-secondary">
+                            View All ({{ total_services }})
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            {% if services %}
+                {% for service in services %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="mb-0">{{ service.title }}</h5>
+                                <span class="badge {% if service.is_active %}bg-success{% else %}bg-secondary{% endif %} bg-opacity-10 {% if service.is_active %}text-success{% else %}text-secondary{% endif %}">
+                                    {{ service.get_service_type_display }}
+                                </span>
+                            </div>
+                            <p class="text-muted small mb-3">{{ service.description|truncatewords:15 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="fw-bold">TZS {{ service.price|floatformat:0 }}</span>
+                                    <span class="text-muted ms-1">• {{ service.delivery_time }} day{{ service.delivery_time|pluralize }}</span>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <a href="{% url 'services:service_edit' service.pk %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form action="{% url 'services:service_delete' service.pk %}" method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger" 
+                                                onclick="if(confirm('Are you sure you want to delete this service?')){this.form.submit()}"
+                                                title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center py-4">
+                            <i class="bi bi-briefcase display-4 text-muted mb-3"></i>
+                            <h5>No Services Yet</h5>
+                            <p class="text-muted mb-0">You haven't created any services yet. Get started by creating your first service.</p>
+                            <a href="{% url 'services:service_create' %}" class="btn btn-primary mt-3">
+                                <i class="bi bi-plus-lg me-1"></i>Create Service
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <!-- End Services Section -->
+    </div>
+</div>
+
+<!-- Skills & Recent Activity Row -->
+<div class="container-fluid mt-4">
+    <div class="row g-4">
+        <!-- Skills & Endorsements -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Skills & Endorsements</h5>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addSkillModal" aria-label="Add new skill">
+                        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Add Skill
+                    </button>
+                </div>
+                <div class="card-body p-3">
+                    <div id="skills-container">
+                        {% if user.freelancer %}
+                            {% with skills=user.freelancer.skills.all %}
+                                {% include 'dashboard/includes/skills_list.html' %}
+                            {% endwith %}
+                        {% else %}
+                            <div class="alert alert-warning">No freelancer profile found. Please complete your freelancer profile to add skills.</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <a href="#" class="btn btn-link text-decoration-none p-0">
+                        View all skills <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">Recent Activity</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <!-- Activity Item 1 -->
+                        <div class="list-group-item border-0 p-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <div class="avatar-sm bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle">
+                                        <i class="bi bi-check-lg"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">Project Completed</h6>
+                                    <p class="text-muted small mb-0">You've successfully completed the E-commerce Website project.</p>
+                                    <small class="text-muted"><i class="bi bi-clock me-1"></i> 2 hours ago</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Activity Item 2 -->
+                        <div class="list-group-item border-0 p-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <div class="avatar-sm bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center rounded-circle">
+                                        <i class="bi bi-chat-dots"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">New Message</h6>
+                                    <p class="text-muted small mb-0">You have a new message from John Doe about your proposal.</p>
+                                    <small class="text-muted"><i class="bi bi-clock me-1"></i> 5 hours ago</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Activity Item 3 -->
+                        <div class="list-group-item border-0 p-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <div class="avatar-sm bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center rounded-circle">
+                                        <i class="bi bi-bell"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">New Job Alert</h6>
+                                    <p class="text-muted small mb-0">New job posted: Senior React Developer at TechCorp.</p>
+                                    <small class="text-muted"><i class="bi bi-clock me-1"></i> 1 day ago</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'vendor/chart.js/Chart.min.js' %}"></script>
+
+<!-- Add Skill Modal -->
+<div class="modal fade" id="addSkillModal" tabindex="-1" aria-labelledby="addSkillModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Skill</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="add-skill-form">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="skill-name" class="form-label">Skill Name</label>
+                        <input type="text" class="form-control" id="skill-name" name="name" required>
+                        <div class="form-text">Enter the name of the skill you want to add.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Skill</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Skill Modal -->
+<div class="modal fade" id="editSkillModal" tabindex="-1" aria-labelledby="editSkillModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Skill</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="edit-skill-form">
+                {% csrf_token %}
+                <input type="hidden" id="edit-skill-id" name="skill_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit-skill-name" class="form-label">Skill Name</label>
+                        <input type="text" class="form-control" id="edit-skill-name" name="name" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle skill management
+document.addEventListener('DOMContentLoaded', function() {
+    const skillsContainer = document.getElementById('skills-container');
+    
+    // Add skill form submission
+    const addSkillForm = document.getElementById('add-skill-form');
+    if (addSkillForm) {
+        addSkillForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('{% url "dashboard:add_skill" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the skills list
+                    loadSkills();
+                    // Reset and close the modal
+                    addSkillForm.reset();
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addSkillModal'));
+                    modal.hide();
+                    
+                    // Show success message
+                    // Skill added silently
+                } else {
+                    throw new Error(data.error || 'Failed to add skill');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error', error.message || 'Failed to add skill', 'danger');
+            });
+        });
+    }
+    
+    // Handle edit skill button click
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-skill')) {
+            const button = e.target.closest('.edit-skill');
+            const skillId = button.dataset.skillId;
+            const skillName = button.closest('.skill-item').querySelector('.skill-title').textContent.trim();
+            
+            // Set the values in the edit form
+            document.getElementById('edit-skill-id').value = skillId;
+            document.getElementById('edit-skill-name').value = skillName;
+            
+            // Show the edit modal
+            const editModal = new bootstrap.Modal(document.getElementById('editSkillModal'));
+            editModal.show();
+        }
+    });
+    
+    // Handle edit skill form submission
+    const editSkillForm = document.getElementById('edit-skill-form');
+    if (editSkillForm) {
+        editSkillForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const skillId = formData.get('skill_id');
+            
+            fetch(`/dashboard/skills/${skillId}/edit/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close the modal
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editSkillModal'));
+                    editModal.hide();
+                    
+                    // Reload the skills list
+                    loadSkills();
+                } else {
+                    throw new Error(data.error || 'Failed to update skill');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error', error.message || 'Failed to update skill', 'danger');
+            });
+        });
+    }
+    
+    // Handle delete skill
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-skill')) {
+            const button = e.target.closest('.delete-skill');
+            const skillId = button.dataset.skillId;
+            
+            if (confirm('Are you sure you want to remove this skill?')) {
+                const deleteButton = e.target.closest('.delete-skill');
+                const originalText = deleteButton.innerHTML;
+                deleteButton.disabled = true;
+                deleteButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Removing...';
+                
+                fetch(`/dashboard/skills/${skillId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({})
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || `HTTP error! status: ${response.status}`);
+                        }).catch(() => {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Remove the skill element
+                        const skillElement = document.querySelector(`.skill-item[data-skill-id="${skillId}"]`);
+                        if (skillElement) {
+                            skillElement.remove();
+                            
+                            // If no skills left, show empty state
+                            if (!document.querySelector('.skill-item')) {
+                                skillsContainer.innerHTML = `
+                                    <div class="col-12 text-center py-4">
+                                        <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
+                                        <p class="text-muted mt-2">No skills added yet. Click 'Add Skill' to get started.</p>
+                                    </div>
+                                `;
+                            }
+                        }
+                    } else {
+                        throw new Error(data.error || 'Failed to delete skill');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('Error', error.message || 'Failed to delete skill', 'danger');
+                })
+                .finally(() => {
+                    if (deleteButton) {
+                        deleteButton.disabled = false;
+                        deleteButton.innerHTML = originalText;
+                    }
+                });
+            }
+        }
+    });
+    
+    // Function to load skills
+    function loadSkills() {
+        fetch('{% url "dashboard:freelancer_skills" %}', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.text())
+            .then(html => {
+                skillsContainer.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error loading skills:', error);
+            });
+    }
+    
+    // Function to show toast notifications
+    function showToast(title, message, type = 'info') {
+        // You can implement a toast notification system here
+        // For now, we'll use alert
+        alert(`${title}: ${message}`);
+    }
+});
+</script>
+<script>
+// Initialize tooltips and popovers
+document.addEventListener('DOMContentLoaded', function() {
+    // Tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Popovers
+    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.forEach(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
+
+    // Add animation to elements with data-animate attribute
+    const animateElements = document.querySelectorAll('[data-animate]');
+    
+    const animateOnScroll = function() {
+        animateElements.forEach(element => {
+            const elementPosition = element.getBoundingClientRect().top;
+            const screenPosition = window.innerHeight / 1.2;
+            
+            if (elementPosition < screenPosition) {
+                element.classList.add('animate-fade-in');
+            }
+        });
+    };
+    
+    // Initial check
+    animateOnScroll();
+    
+    // Check on scroll
+    window.addEventListener('scroll', animateOnScroll);
+
+    // Initialize charts
+    initCharts();
+    initProgressBars();
+});
+
+// Add animation on scroll
+function animateOnScroll() {
+    const elements = document.querySelectorAll('.animate-on-scroll');
+    elements.forEach(element => {
+        const elementTop = element.getBoundingClientRect().top;
+        const elementVisible = 150;
+        
+        if (elementTop < window.innerHeight - elementVisible) {
+            element.classList.add('visible');
+        }
+    });
+}
+
+// Initialize progress bars
+function initProgressBars() {
+    document.querySelectorAll('[data-width]').forEach(bar => {
+        bar.style.width = bar.getAttribute('data-width');
+    });
+}
+
+// Chart.js configuration
+function initCharts() {
+    // Set default font family and color
+    Chart.defaults.global.defaultFontFamily = 'Nunito, -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    Chart.defaults.global.defaultFontColor = '#858796';
+
+    // Number formatting helper
+    function number_format(number, decimals, dec_point, thousands_sep) {
+        number = (number + '').replace(',', '').replace(' ', '');
+        var n = !isFinite(+number) ? 0 : +number,
+            prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+            sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
+            dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
+            s = '',
+            toFixedFix = function(n, prec) {
+                var k = Math.pow(10, prec);
+                return '' + Math.round(n * k) / k;
+            };
+        s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+        if (s[0].length > 3) {
+            s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+        }
+        if ((s[1] || '').length < prec) {
+            s[1] = s[1] || '';
+            s[1] += new Array(prec - s[1].length + 1).join('0');
+        }
+        return s.join(dec);
+    }
+
+
+    // Initialize Area Chart if element exists
+    const areaChartEl = document.getElementById("myAreaChart");
+    if (areaChartEl) {
+        new Chart(areaChartEl, {
+            type: 'line',
+            data: {
+                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+                datasets: [{
+                    label: "Earnings",
+                    lineTension: 0.3,
+                    backgroundColor: "rgba(78, 115, 223, 0.05)",
+                    borderColor: "rgba(78, 115, 223, 1)",
+                    pointRadius: 3,
+                    pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                    pointBorderColor: "rgba(78, 115, 223, 1)",
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                    pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    data: [0, 10000, 5000, 15000, 10000, 20000, 15000, 25000, 20000, 30000, 25000, 40000],
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        left: 10,
+                        right: 25,
+                        top: 25,
+                        bottom: 0
+                    }
+                },
+                scales: {
+                    xAxes: [{
+                        time: {
+                            unit: 'date'
+                        },
+                        gridLines: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 7
+                        }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            maxTicksLimit: 5,
+                            padding: 10,
+                            callback: function(value) {
+                                return 'TZS ' + number_format(value);
+                            }
+                        },
+                        gridLines: {
+                            color: "rgb(234, 236, 244)",
+                            zeroLineColor: "rgb(234, 236, 244)",
+                            drawBorder: false,
+                            borderDash: [2],
+                            zeroLineBorderDash: [2]
+                        }
+                    }],
+                },
+                legend: {
+                    display: false
+                },
+                tooltips: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyFontColor: "#858796",
+                    titleMarginBottom: 10,
+                    titleFontColor: '#6e707e',
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    xPadding: 15,
+                    yPadding: 15,
+                    displayColors: false,
+                    intersect: false,
+                    mode: 'index',
+                    caretPadding: 10,
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            var datasetLabel = this._chart.data.datasets[tooltipItem.datasetIndex].label || '';
+                            return datasetLabel + ': TZS ' + number_format(tooltipItem.yLabel);
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Initialize everything when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    animateOnScroll();
+    initProgressBars();
+    initCharts();
+});
+
+// Run on scroll
+window.addEventListener('scroll', animateOnScroll);
+</script>
+{% endblock extra_js %}

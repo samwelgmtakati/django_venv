@@ -1,0 +1,110 @@
+/* Proposal Form Styles */
+.job-summary {
+    background-color: #f8f9fc;
+    border-left: 4px solid #4e73df;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0.35rem;
+}
+
+.file-upload-area {
+    border: 2px dashed #d1d3e2;
+    border-radius: 0.35rem;
+    transition: all 0.3s ease;
+    padding: 2rem;
+    text-align: center;
+    background-color: #f8f9fc;
+    margin-bottom: 1rem;
+}
+
+.file-upload-area:hover {
+    border-color: #4e73df;
+    background-color: #f0f4f9;
+}
+
+.file-upload-area i {
+    font-size: 2.5rem;
+    color: #4e73df;
+    margin-bottom: 1rem;
+}
+
+.file-preview {
+    margin-top: 1rem;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background-color: #f8f9fc;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #e3e6f0;
+}
+
+.file-item .file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-item .file-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Form Styling */
+.form-label {
+    font-weight: 600;
+    color: #5a5c69;
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus, 
+.form-select:focus {
+    border-color: #bac8f3;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* Card Styling */
+.card {
+    border: none;
+    border-radius: 0.35rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #4e73df;
+    border-bottom: 1px solid #e3e6f0;
+    padding: 1rem 1.5rem;
+}
+
+.card-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: white;
+}
+
+/* Status Badges - Specific to proposal status only */
+.proposal-status .badge {
+    font-weight: 500;
+    padding: 0.4em 0.8em;
+}
+
+.proposal-status .badge-pending {
+    background-color: #f6c23e;
+    color: #fff;
+}
+
+.proposal-status .badge-accepted {
+    background-color: #1cc88a;
+    color: #fff;
+}
+
+.proposal-status .badge-rejected {
+    background-color: #e74a3b;
+    color: #fff;
+}

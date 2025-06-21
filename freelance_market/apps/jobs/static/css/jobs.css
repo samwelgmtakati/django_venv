@@ -1,0 +1,192 @@
+/* Job List Styles */
+.job-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.job-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+}
+
+.job-card .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.job-card .card-title {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: #2c3e50;
+}
+
+.job-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
+.job-meta-item {
+    display: flex;
+    align-items: center;
+    color: #6c757d;
+}
+
+.job-meta-item i {
+    margin-right: 0.375rem;
+    color: #adb5bd;
+}
+
+.job-description {
+    flex-grow: 1;
+    color: #495057;
+    margin-bottom: 1.25rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-clamp: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.job-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    margin-top: auto;
+    border-top: 1px solid #e9ecef;
+}
+
+.job-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Status Badges */
+.status-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    border-radius: 0.25rem;
+    text-transform: capitalize;
+}
+
+.status-draft {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.status-published {
+    background-color: #e7f5ff;
+    color: #1c7ed6;
+    border: 1px solid #d0ebff;
+}
+
+.status-closed {
+    background-color: #fff5f5;
+    color: #fa5252;
+    border: 1px solid #ffd8d8;
+}
+
+.status-completed {
+    background-color: #f3f8ff;
+    color: #4263eb;
+    border: 1px solid #dbe4ff;
+}
+
+/* Empty State */
+.empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    color: #dee2e6;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state-icon i {
+    display: inline-block;
+}
+
+/* Filter Panel */
+.filter-panel {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-section {
+    margin-bottom: 1.25rem;
+}
+
+.filter-section:last-child {
+    margin-bottom: 0;
+}
+
+.filter-section-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .filter-panel {
+        margin-bottom: 1rem;
+    }
+    
+    .job-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Animation for status changes */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.job-card {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Loading state */
+.loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.7), 
+        transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}

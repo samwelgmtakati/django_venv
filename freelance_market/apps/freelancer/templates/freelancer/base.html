@@ -1,0 +1,144 @@
+{% extends 'dashboard/base.html' %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .skill-badge {
+        margin: 2px;
+        font-size: 0.9rem;
+    }
+    .profile-header {
+        position: relative;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #eee;
+    }
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .availability-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+    .profile-stats {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .stat-item {
+        text-align: center;
+        padding: 10px;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" 
+                           href="{% url 'freelancer:profile' %}">
+                            <i class="bi bi-person me-2"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'edit_profile' %}active{% endif %}" 
+                           href="{% url 'freelancer:edit_profile' %}">
+                            <i class="bi bi-pencil-square me-2"></i> Edit Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" 
+                           href="{% url 'freelancer:delete_profile' %}">
+                            <i class="bi bi-trash me-2"></i> Delete Profile
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">{% block page_title %}{% endblock %}</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    {% block page_actions %}{% endblock %}
+                </div>
+            </div>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            {% block main_content %}
+            {% endblock %}
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Toggle availability
+const toggleAvailability = () => {
+    fetch("{% url 'freelancer:toggle_availability' %}", {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFTOKEN': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const badge = document.querySelector('.availability-badge');
+            if (badge) {
+                badge.textContent = data.is_available ? 'Available' : 'Not Available';
+                badge.className = `badge bg-${data.is_available ? 'success' : 'secondary'} availability-badge`;
+            }
+        } else {
+            console.error('Error toggling availability:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

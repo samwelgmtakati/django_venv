@@ -1,0 +1,87 @@
+{% extends "messages/base.html" %}
+
+{% block message_title %}Sent Messages{% endblock %}
+
+{% block message_heading %}
+    <div class="d-flex justify-content-between align-items-center w-100">
+        <span>Sent Messages</span>
+        <a href="{% url 'messages:compose' %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-edit me-1"></i> New Message
+        </a>
+    </div>
+{% endblock %}
+
+{% block message_content %}
+    {% if messages_page.object_list %}
+        <div class="list-group">
+            {% for message in messages_page %}
+                <a href="{% url 'messages:view' message.id %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">
+                            To: {{ message.recipient.get_full_name|default:message.recipient.username }}
+                        </h6>
+                        <small class="text-muted">{{ message.sent_at|timesince }} ago</small>
+                    </div>
+                    <p class="mb-1">
+                        {{ message.subject|truncatechars:80 }}
+                    </p>
+                    <small class="text-muted">
+                        {{ message.body|striptags|truncatewords:15 }}
+                    </small>
+                </a>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if messages_page.has_other_pages %}
+            <nav aria-label="Message navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if messages_page.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ messages_page.previous_page_number }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&laquo;</span>
+                        </li>
+                    {% endif %}
+
+                    {% for num in messages_page.paginator.page_range %}
+                        {% if messages_page.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if messages_page.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ messages_page.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&raquo;</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-paper-plane fa-4x text-muted mb-3"></i>
+            <h5>No sent messages</h5>
+            <p class="text-muted">You haven't sent any messages yet</p>
+            <a href="{% url 'messages:compose' %}" class="btn btn-primary mt-2">
+                <i class="fas fa-edit me-1"></i> Compose New Message
+            </a>
+        </div>
+    {% endif %}
+{% endblock %}

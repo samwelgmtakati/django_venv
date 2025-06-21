@@ -1,0 +1,1 @@
+web: gunicorn freelance_market.wsgi:application --log-file -

@@ -1,0 +1,255 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}My Proposals - Freelance Market{% endblock %}
+
+{% block extra_css %}
+<style>
+    .proposal-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .proposal-card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
+    }
+    .proposal-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .proposal-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>My Proposals</h1>
+        <div class="section-actions">
+            <a href="{% url 'dashboard:find_work' %}" class="btn btn-outline-primary">
+                <i class="fas fa-search me-1"></i> Find More Work
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="stat-label">Total Proposals</h6>
+                            <h3 class="stat-value">{{ proposals.paginator.count }}</h3>
+                        </div>
+                        <div class="stat-icon bg-primary-light">
+                            <i class="fas fa-file-alt text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="stat-label">Active</h6>
+                            <h3 class="stat-value">{{ proposals|length|default:0 }}</h3>
+                        </div>
+                        <div class="stat-icon bg-success-light">
+                            <i class="fas fa-check-circle text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0">My Proposals</h6>
+                    <div class="btn-group" role="group">
+                        <a href="?status=all" class="btn btn-sm btn-outline-secondary {% if status_filter == 'all' %}active{% endif %}">
+                            All
+                        </a>
+                        {% for value, label in status_choices.items %}
+                        <a href="?status={{ value }}" class="btn btn-sm btn-outline-secondary {% if status_filter == value %}active{% endif %}">
+                            {{ label }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-body">
+
+                    <!-- Proposals List -->
+                    {% if proposals %}
+                        {% for proposal in proposals %}
+                        <div class="proposal-card card mb-3">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                {% if proposal.job.client.profile.avatar %}
+                                                <img src="{{ proposal.job.client.profile.avatar.url }}" 
+                                                     alt="{{ proposal.job.client.get_full_name|default:proposal.job.client.username }}" 
+                                                     class="proposal-avatar">
+                                                {% else %}
+                                                <div class="proposal-avatar bg-light d-flex align-items-center justify-content-center">
+                                                    <i class="fas fa-user text-muted"></i>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <h5 class="mb-1">
+                                                    <a href="{% url 'jobs:job_detail' slug=proposal.job.slug %}" class="text-dark">
+                                                        {{ proposal.job.title }}
+                                                    </a>
+                                                </h5>
+                                                <p class="mb-1 text-muted">
+                                                    <i class="far fa-user me-1"></i>
+                                                    {{ proposal.job.client.get_full_name|default:proposal.job.client.username }}
+                                                    <span class="mx-2">•</span>
+                                                    <i class="far fa-clock me-1"></i>
+                                                    {{ proposal.created_at|timesince }} ago
+                                                </p>
+                                                <div class="d-flex align-items-center mt-2">
+                                                    <span class="badge status-badge {% if proposal.status == 'accepted' %}bg-success
+                                                                                    {% elif proposal.status == 'rejected' %}bg-danger
+                                                                                    {% elif proposal.status == 'pending' %}bg-warning
+                                                                                    {% else %}bg-secondary{% endif %} me-2">
+                                                        {{ proposal.get_status_display }}
+                                                    </span>
+                                                    <span class="text-muted small">
+                                                        <i class="fas fa-dollar-sign me-1"></i> TZS
+                                                        {% if proposal.job.job_type == 'fixed' %}
+                                                            TZS {{ proposal.bid_amount|floatformat:2 }} Fixed Price
+                                                        {% else %}
+                                                            TZS {{ proposal.bid_amount|floatformat:2 }}/hr
+                                                        {% endif %}
+                                                    </span>
+                                                    {% if proposal.estimated_days %}
+                                                    <span class="text-muted small ms-3">
+                                                        <i class="far fa-calendar-alt me-1"></i>
+                                                        {{ proposal.estimated_days }} days delivery
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                        <a href="{% url 'jobs:proposal_detail' job_slug=proposal.job.slug pk=proposal.id %}" 
+                                           class="btn btn-outline-primary btn-sm me-1">
+                                            <i class="far fa-eye me-1"></i> View Details
+                                        </a>
+                                        {% if proposal.status == 'pending' %}
+                                        <a href="{% url 'jobs:edit_proposal' job_slug=proposal.job.slug pk=proposal.id %}" 
+                                           class="btn btn-outline-secondary btn-sm">
+                                            <i class="far fa-edit me-1"></i> Edit
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="fas fa-inbox fa-4x text-muted"></i>
+                            </div>
+                            <h5 class="text-muted mb-3">No Proposals Found</h5>
+                            <p class="text-muted mb-4">You haven't submitted any proposals yet. Browse jobs and submit your first proposal!</p>
+                            <a href="{% url 'dashboard:find_work' %}" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Find Work
+                            </a>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Pagination -->
+                        {% if proposals.has_other_pages %}
+                        <div class="mt-4">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-center mb-0">
+                                    {% if proposals.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ proposals.previous_page_number }}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" aria-label="Previous">
+                                                <span aria-hidden="true">&laquo;</span>
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">&laquo;</span>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for i in proposals.paginator.page_range %}
+                                        {% if proposals.number == i %}
+                                            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                        {% else %}
+                                            <li class="page-item"><a class="page-link" href="?page={{ i }}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}">{{ i }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if proposals.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ proposals.next_page_number }}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" aria-label="Next">
+                                                <span aria-hidden="true">&raquo;</span>
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">&raquo;</span>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="mb-3">
+                                <i class="fas fa-inbox fa-4x text-muted"></i>
+                            </div>
+                            <h5 class="text-muted mb-3">No Proposals Found</h5>
+                            <p class="text-muted mb-4">You haven't submitted any proposals yet. Browse jobs and submit your first proposal!</p>
+                            <a href="{% url 'dashboard:find_work' %}" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Find Work
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Enable tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

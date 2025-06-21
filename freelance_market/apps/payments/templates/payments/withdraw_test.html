@@ -1,0 +1,15 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Withdraw Test - Freelance Market{% endblock %}
+
+{% block content %}
+{{ block.super }}
+<div class="container-fluid">
+    <div class="alert alert-success">
+        <h4 class="alert-heading">Success!</h4>
+        <p>This is a test template to verify template inheritance.</p>
+        <p>If you can see this, the template inheritance is working correctly.</p>
+    </div>
+</div>
+{% endblock %}

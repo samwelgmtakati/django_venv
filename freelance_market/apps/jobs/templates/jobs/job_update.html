@@ -1,0 +1,243 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Update Job{% endblock title %}
+
+{% block extra_css %}
+{{ block.super }}
+<!-- Additional CSS for this page -->
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+    .form-label.required:after {
+        content: " *";
+        color: #dc3545;
+    }
+    .card {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .card-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .preview-card {
+        border-left: 4px solid #0d6efd;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h4 mb-0">Update Job</h2>
+                    <p class="mb-0">Update the details of your job posting</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <strong>Error:</strong>
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Job Title -->
+                        <div class="mb-4">
+                            {{ form.title|as_crispy_field }}
+                        </div>
+                        
+                        <!-- Job Description -->
+                        <div class="mb-4">
+                            {{ form.description|as_crispy_field }}
+                        </div>
+                        
+                        <!-- Requirements -->
+                        <div class="mb-4">
+                            {{ form.requirements|as_crispy_field }}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                {{ form.category|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                {{ form.job_type|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-4 budget-field">
+                                {{ form.budget|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4 mb-4 hourly-rate-fields" style="display: none;">
+                                {{ form.min_hourly_rate|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4 mb-4 hourly-rate-fields" style="display: none;">
+                                {{ form.max_hourly_rate|as_crispy_field }}
+                            </div>
+
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                {{ form.experience_level|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                {{ form.duration|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                {{ form.deadline|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Preview Section -->
+                        <div class="card mb-4 preview-card">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Job Preview</h5>
+                            </div>
+                            <div class="card-body">
+                                <h4 id="preview-title">{{ form.instance.title|default:"Job Title" }}</h4>
+                                <div class="text-muted mb-3" id="preview-budget">
+                                    Budget: TZS {{ form.instance.budget|default:"0" }}
+                                </div>
+                                <div class="mb-3" id="preview-description">
+                                    {{ form.instance.description|default:"Job description will appear here..."|linebreaksbr }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between align-items-center pt-4 border-top mt-4">
+                            <a href="{% url 'jobs:job_detail' object.slug %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Cancel
+                            </a>
+                            <div class="btn-group">
+                                <button type="submit" name="draft" value="true" class="btn btn-outline-secondary">
+                                    <i class="bi bi-save me-1"></i> Save as Draft
+                                </button>
+                                {% if object.status == 'draft' %}
+                                    <a href="{% url 'jobs:job_publish' object.slug %}" class="btn btn-primary">
+                                        <i class="bi bi-check-circle me-1"></i> Publish Job
+                                    </a>
+                                {% else %}
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle me-1"></i> Update Job
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Update preview in real-time
+function updatePreview() {
+    // Update title
+    const titleInput = document.getElementById('id_title');
+    const previewTitle = document.getElementById('preview-title');
+    if (titleInput && previewTitle) {
+        previewTitle.textContent = titleInput.value || 'Job Title';
+    }
+    
+    // Update budget
+    const jobTypeInput = document.querySelector('input[name="job_type"]:checked');
+    const budgetInput = document.getElementById('id_budget');
+    const minRateInput = document.getElementById('id_min_hourly_rate');
+    const maxRateInput = document.getElementById('id_max_hourly_rate');
+    const previewBudget = document.getElementById('preview-budget');
+    
+    if (previewBudget) {
+        if (jobTypeInput && jobTypeInput.value === 'fixed' && budgetInput) {
+            const budgetValue = budgetInput.value ? 'TZS ' + parseInt(budgetInput.value).toLocaleString() : 'TZS 0';
+            previewBudget.textContent = `Budget: ${budgetValue} (Fixed Price)`;
+        } else if (jobTypeInput && jobTypeInput.value === 'hourly' && minRateInput && maxRateInput) {
+            const minRate = minRateInput.value ? parseInt(minRateInput.value).toLocaleString() : '0';
+            const maxRate = maxRateInput.value ? parseInt(maxRateInput.value).toLocaleString() : '0';
+            previewBudget.textContent = `Hourly Rate: TZS ${minRate} - TZS ${maxRate}/hr`;
+        } else {
+            previewBudget.textContent = 'Budget: Not specified';
+        }
+    }
+    
+    // Update description and requirements
+    const descriptionInput = document.getElementById('id_description');
+    const requirementsInput = document.getElementById('id_requirements');
+    const previewDescription = document.getElementById('preview-description');
+    
+    if (previewDescription) {
+        let previewHtml = '';
+        
+        if (descriptionInput && descriptionInput.value) {
+            previewHtml += `<div class='mb-3'><h5>Job Description</h5>${descriptionInput.value.replace(/\n/g, '<br>')}</div>`;
+        }
+        
+        if (requirementsInput && requirementsInput.value) {
+            previewHtml += `<div class='mb-3'><h5>Requirements</h5>${requirementsInput.value.replace(/\n/g, '<br>')}</div>`;
+        }
+        
+        if (!previewHtml) {
+            previewHtml = 'Job details will appear here...';
+        }
+        
+        previewDescription.innerHTML = previewHtml;
+    }
+}
+
+// Add event listeners for real-time preview
+$(document).ready(function() {
+    // Add input event listeners for real-time updates
+    $('#id_title, #id_budget, #id_min_hourly_rate, #id_max_hourly_rate, #id_description, #id_requirements').on('input', updatePreview);
+    
+    // Handle job type changes
+    $('input[name="job_type"]').on('change', function() {
+        updatePreview();
+        
+        // Show/hide relevant fields based on job type
+        const isHourly = $(this).val() === 'hourly';
+        $('.budget-field').toggle(!isHourly);
+        $('.hourly-rate-fields').toggle(isHourly);
+    });
+    
+    // Initialize field visibility based on initial job type
+    const initialJobType = $('input[name="job_type"]:checked').val();
+    const isHourly = initialJobType === 'hourly';
+    $('.budget-field').toggle(!isHourly);
+    $('.hourly-rate-fields').toggle(isHourly);
+    
+    // Initialize preview on page load
+    updatePreview();
+    
+    // Initialize form validation
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+});
+</script>
+{% endblock %}

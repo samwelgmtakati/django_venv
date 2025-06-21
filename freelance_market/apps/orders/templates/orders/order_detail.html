@@ -1,0 +1,50 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Order #{{ order.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Ensure badge colors are visible */
+.badge.bg-secondary { background-color: #6c757d !important; color: white !important; }
+.badge.bg-primary { background-color: #0d6efd !important; color: white !important; }
+.badge.bg-info { background-color: #0dcaf0 !important; color: #000 !important; }
+.badge.bg-success { background-color: #198754 !important; color: white !important; }
+.badge.bg-warning { background-color: #ffc107 !important; color: #000 !important; }
+.badge.bg-danger { background-color: #dc3545 !important; color: white !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Debug Info: {{ debug_info|default:"No debug info" }} -->
+<h2>Order #{{ order.id }} - {{ order.job.title }}</h2>
+<p>Status: {{ order.status }} <span class="badge {{ order.get_status_badge_class }}">{{ order.get_status_display }}</span></p>
+<hr>
+<h4>Deliveries</h4>
+<ul class="list-group mb-3">
+  {% for delivery in order.deliveries.all %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      {{ delivery.uploaded_at|date:"Y-m-d H:i" }}
+      {% if delivery.file %}<a href="{{ delivery.file.url }}" class="btn btn-sm btn-outline-secondary">Download file</a>{% endif %}
+    </li>
+  {% empty %}
+    <li class="list-group-item">No deliveries yet.</li>
+  {% endfor %}
+</ul>
+
+{% if user == order.client and order.status == "delivered" %}
+<form method="post" action="{% url 'orders:approve' order.pk %}" class="d-inline">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-success mb-2">Approve Delivery</button>
+</form>
+{% endif %}
+
+{% if order.review %}
+<h4>Review</h4>
+<p><strong>Rating:</strong> {{ order.review.rating }}/5</p>
+<p>{{ order.review.comment }}</p>
+{% elif user == order.client and order.status == "approved" %}
+<a href="{% url 'orders:review' order.pk %}" class="btn btn-success">Leave Review</a>
+{% endif %}
+{% if user == order.freelancer %}
+<a href="{% url 'orders:deliver' order.pk %}" class="btn btn-primary">Upload Delivery</a>
+{% endif %}
+{% endblock %}

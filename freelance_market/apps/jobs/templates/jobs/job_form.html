@@ -1,0 +1,338 @@
+{% extends 'jobs/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}{% if form.instance.pk %}Edit{% else %}Create New{% endif %} Job{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'jobs:job_list' %}">My Jobs</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">
+        {% if form.instance.pk %}Edit{% else %}Create{% endif %} Job
+    </li>
+{% endblock %}
+
+{% block header_actions %}
+    <a href="{% url 'jobs:job_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Jobs
+    </a>
+{% endblock %}
+
+{% block job_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Job Details</h5>
+                <p class="text-muted small mb-0">Fill in the details below to {% if form.instance.pk %}update{% else %}create{% endif %} your job posting</p>
+            </div>
+            <div class="card-body">
+                <form method="post" id="jobForm" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <strong>Error:</strong>
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.title|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.category|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.job_type|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.experience_level|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.budget|as_crispy_field }}
+                            <div class="form-text">Leave empty to negotiate</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description|as_crispy_field }}
+                        <div class="form-text">
+                            Be specific about what needs to be done. Include requirements, expected deliverables, and any relevant links.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.requirements|as_crispy_field }}
+                        <div class="form-text">
+                            List the skills and qualifications required for this job.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Attachments</label>
+                        <div class="file-upload mb-2
+                            <input type="file" class="form-control" id="attachments" name="attachments" multiple>
+                            <div class="form-text">
+                                Upload any relevant files (max 10MB each). Supported formats: PDF, DOC, DOCX, JPG, PNG
+                            </div>
+                        </div>
+                        
+                        {% if form.instance.pk and form.instance.attachments.exists %}
+                            <div class="mt-2">
+                                <label class="form-label small text-muted">Current Attachments:</label>
+                                <div class="list-group">
+                                    {% for attachment in form.instance.attachments.all %}
+                                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-file-earmark-text me-2"></i>
+                                                <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none">
+                                                    {{ attachment.filename|truncatechars:40 }}
+                                                </a>
+                                            </div>
+                                            <div class="form-check
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="delete_attachments" value="{{ attachment.id }}" id="del_{{ attachment.id }}">
+                                                <label class="form-check-label small text-danger" for="del_{{ attachment.id }}">
+                                                    Remove
+                                                </label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-check form-switch mb-4
+                        <input class="form-check-input" type="checkbox" id="draft" name="draft" {% if form.instance.status == 'draft' or not form.instance.pk %}checked{% endif %}>
+                        <label class="form-check-label" for="draft">
+                            Save as draft
+                        </label>
+                        <div class="form-text">
+                            Drafts won't be visible to freelancers until published.
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            {% if form.instance.pk %}
+                                <a href="{% url 'jobs:job_detail' form.instance.pk %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-lg me-1"></i> Cancel
+                                </a>
+                            {% else %}
+                                <a href="{% url 'jobs:job_list' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-lg me-1"></i> Cancel
+                                </a>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <button type="submit" name="save_and_continue" value="1" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-save me-1"></i> Save & Continue Editing
+                            </button>
+                            {% if form.instance.pk and form.instance.status == 'draft' %}
+                                <a href="{% url 'jobs:job_publish' form.instance.slug %}" class="btn btn-primary">
+                                    <i class="bi bi-check-lg me-1"></i> Publish Job
+                                </a>
+                            {% else %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg me-1"></i>
+                                    {% if form.instance.pk %}Update{% else %}Create{% endif %} Job
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if form.instance.pk %}
+            <div class="card shadow-sm mt-4 border-danger">
+                <div class="card-header bg-danger bg-opacity-10 text-danger py-3">
+                    <h6 class="mb-0">Danger Zone</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Delete this job</h6>
+                            <p class="small text-muted mb-0">
+                                Once deleted, this job and all related data will be permanently removed.
+                            </p>
+                        </div>
+                        <a href="{% url 'jobs:job_delete' form.instance.pk %}" 
+                           class="btn btn-outline-danger confirm-delete"
+                           data-confirm="Are you sure you want to delete this job? This action cannot be undone.">
+                            <i class="bi bi-trash me-1"></i> Delete Job
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0">Tips for a great job post</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 text-primary me-2">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Be specific</h6>
+                                <p class="small text-muted mb-0">
+                                    Clearly describe what needs to be done, including requirements and expected deliverables.
+                                </p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 text-primary me-2">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Set a realistic budget</h6>
+                                <p class="small text-muted mb-0">
+                                    Research similar jobs to set a competitive price that reflects the work required.
+                                </p>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 text-primary me-2">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Be responsive</h6>
+                                <p class="small text-muted mb-0">
+                                    Respond promptly to questions from interested freelancers.
+                                </p>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0">Preview</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h5 id="preview-title" class="mb-1">{% if form.title.value %}{{ form.title.value }}{% else %}Your Job Title{% endif %}</h5>
+                    <div class="d-flex align-items-center small text-muted mb-2">
+                        <span id="preview-type" class="badge bg-light text-dark me-2">
+                            {% if form.job_type.value %}{{ form.get_job_type_display }}{% else %}Job Type{% endif %}
+                        </span>
+                        <span id="preview-experience" class="badge bg-light text-dark">
+                            {% if form.experience_level.value %}{{ form.get_experience_level_display }}{% else %}Experience Level{% endif %}
+                        </span>
+                    </div>
+                    <p id="preview-description" class="small mb-0 text-muted">
+                        {% if form.description.value %}
+                            {{ form.description.value|truncatewords:20 }}
+                        {% else %}
+                            Your job description will appear here. Make it clear and detailed to attract the right candidates.
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                    <div>
+                        <span class="small text-muted">
+                            <i class="bi bi-currency-exchange"></i> TZS
+                            <span id="preview-budget">
+                                {% if form.budget.value %}
+                                    {{ form.budget.value }}
+                                {% else %}
+                                    Negotiable
+                                {% endif %}
+                            </span>
+                        </span>
+                    </div>
+                    <div>
+                        <span class="small text-muted">
+                            <i class="bi bi-clock"></i> Posted just now
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Update preview in real-time
+function updatePreview() {
+    // Update title
+    const titleInput = document.getElementById('id_title');
+    const previewTitle = document.getElementById('preview-title');
+    if (titleInput && previewTitle) {
+        previewTitle.textContent = titleInput.value || 'Your Job Title';
+    }
+    
+    // Update job type
+    const jobTypeSelect = document.getElementById('id_job_type');
+    const previewType = document.getElementById('preview-type');
+    if (jobTypeSelect && previewType) {
+        const selectedOption = jobTypeSelect.options[jobTypeSelect.selectedIndex];
+        previewType.textContent = selectedOption.text;
+    }
+    
+    // Update experience level
+    const expSelect = document.getElementById('id_experience_level');
+    const previewExp = document.getElementById('preview-experience');
+    if (expSelect && previewExp) {
+        const selectedExp = expSelect.options[expSelect.selectedIndex];
+        previewExp.textContent = selectedExp.text;
+    }
+    
+    // Update budget
+    const budgetInput = document.getElementById('id_budget');
+    const previewBudget = document.getElementById('preview-budget');
+    if (budgetInput && previewBudget) {
+        // Format number with commas as thousand separators
+        const formattedValue = budgetInput.value ? 'TZS ' + parseInt(budgetInput.value).toLocaleString() : 'Negotiable';
+        previewBudget.textContent = formattedValue;
+    }
+    
+    // Update description
+    const descriptionInput = document.getElementById('id_description');
+    const previewDescription = document.getElementById('preview-description');
+    if (descriptionInput && previewDescription) {
+        const content = descriptionInput.value;
+        previewDescription.textContent = content ? 
+            content.substring(0, 200) + (content.length > 200 ? '...' : '') : 
+            'Your job description will appear here. Make it clear and detailed to attract the right candidates.';
+    }
+}
+
+// Add event listeners for real-time preview
+$(document).ready(function() {
+    // Add input event listeners for real-time updates
+    $('#id_title, #id_budget, #id_description').on('input', updatePreview);
+    $('#id_job_type, #id_experience_level').on('change', updatePreview);
+    
+    // Initial preview update
+    updatePreview();
+});
+</script>
+{% endblock %}

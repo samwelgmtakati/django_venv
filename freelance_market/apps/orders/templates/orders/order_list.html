@@ -1,0 +1,44 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Orders{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Ensure badge colors are visible */
+.badge.bg-secondary { background-color: #6c757d !important; color: white !important; }
+.badge.bg-primary { background-color: #0d6efd !important; color: white !important; }
+.badge.bg-info { background-color: #0dcaf0 !important; color: #000 !important; }
+.badge.bg-success { background-color: #198754 !important; color: white !important; }
+.badge.bg-warning { background-color: #ffc107 !important; color: #000 !important; }
+.badge.bg-danger { background-color: #dc3545 !important; color: white !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Orders</h2>
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Job</th>
+      <th>Status</th>
+      <th>Role</th>
+      <th>Created</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for order in orders %}
+    <tr>
+      <td>{{ order.id }}</td>
+      <td>{{ order.job.title }}</td>
+      <td><span class="badge {{ order.get_status_badge_class }}">{{ order.get_status_display }}</span></td>
+      <td>{% if user == order.client %}Client{% else %}Freelancer{% endif %}</td>
+      <td>{{ order.created_at|date:"Y-m-d" }}</td>
+      <td><a class="btn btn-sm btn-outline-primary" href="{% url 'orders:detail' order.pk %}">View</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="text-center">No orders yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

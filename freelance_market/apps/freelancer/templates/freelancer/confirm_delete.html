@@ -1,0 +1,74 @@
+{% extends 'freelancer/base.html' %}
+
+{% block page_title %}Delete Freelancer Profile{% endblock %}
+
+{% block main_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Deletion</h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <i class="bi bi-exclamation-octagon text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4>Are you sure you want to delete your freelancer profile?</h4>
+                    <p class="text-muted">
+                        This action cannot be undone. All your freelancer information, including your profile, skills, 
+                        and other related data will be permanently removed from our system.
+                    </p>
+                    
+                    <div class="alert alert-warning">
+                        <strong>Note:</strong> Your user account will remain active, but you'll need to create a new 
+                        freelancer profile if you want to offer your services again in the future.
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'freelancer:profile' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </a>
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-trash me-1"></i> Yes, Delete My Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">What will be deleted?</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="bi bi-check2-circle text-danger me-2"></i>
+                        Your freelancer profile information
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-check2-circle text-danger me-2"></i>
+                        All associated skills and expertise
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-check2-circle text-danger me-2"></i>
+                        Your portfolio and work samples
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-check2-circle text-danger me-2"></i>
+                        Availability status and hourly rate
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-x-circle text-success me-2"></i>
+                        <strong>Your user account will remain active</strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

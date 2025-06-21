@@ -1,0 +1,222 @@
+{% extends "dashboard/base.html" %}
+{% load humanize %}
+
+{% block title %}Transaction History - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Transaction History</h1>
+        <div>
+            <a href="{% url 'payments:make_payment' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> New Payment
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h6 class="mb-0">Filter Transactions</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="start_date" class="form-label">From Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="end_date" class="form-label">To Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="type" class="form-label">Type</label>
+                    <select class="form-select" id="type" name="type">
+                        <option value="">All Types</option>
+                        {% for value, label in transaction_type_choices %}
+                            <option value="{{ value }}" {% if request.GET.type == value|stringformat:"s" %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">All Statuses</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if request.GET.status == value|stringformat:"s" %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-filter me-1"></i> Filter
+                    </button>
+                    <a href="{% url 'payments:transactions' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-undo me-1"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transactions List -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Recent Transactions</h6>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                    <li><a class="dropdown-item" href="{% url 'payments:export_transactions' %}?format=csv{% for key, value in request.GET.items %}{% if key != 'page' and key != 'format' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-file-csv me-1"></i> CSV</a></li>
+                    <li><a class="dropdown-item" href="{% url 'payments:export_transactions' %}?format=xlsx{% for key, value in request.GET.items %}{% if key != 'page' and key != 'format' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-file-excel me-1"></i> Excel</a></li>
+                    <li><a class="dropdown-item" href="{% url 'payments:export_transactions' %}?format=pdf{% for key, value in request.GET.items %}{% if key != 'page' and key != 'format' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"><i class="fas fa-file-pdf me-1"></i> PDF</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if object_list %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Reference</th>
+                                <th class="text-end">Amount (TZS)</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in object_list %}
+                                <tr>
+                                    <td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
+                                    <td>{{ transaction.description|default:"-" }}</td>
+                                    <td><code>{{ transaction.reference }}</code></td>
+                                    <td class="text-end {% if transaction.amount < 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {{ transaction.amount|floatformat:2|intcomma }}
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if transaction.status == 'completed' %}bg-success{% elif transaction.status == 'pending' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ transaction.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{% url 'payments:transaction_detail' transaction.reference %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                    <div class="card-footer bg-white">
+                        <nav aria-label="Transaction pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link" aria-hidden="true">&laquo;</span>
+                                    </li>
+                                {% endif %}
+
+                                {% for i in paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ i }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link" aria-hidden="true">&raquo;</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No transactions found matching your criteria.</p>
+                    <a href="{% url 'payments:make_payment' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Make Your First Payment
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h6 class="mb-0">Export Transactions</h6>
+        </div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">Export your transaction history in various formats.</p>
+            <div class="btn-group" role="group">
+                <a href="{% url 'payments:export_transactions' %}?format=csv{% for key, value in request.GET.items %}{% if key != 'page' and key != 'format' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-file-csv me-1"></i> CSV
+                </a>
+                <a href="{% url 'payments:export_transactions' %}?format=pdf{% for key, value in request.GET.items %}{% if key != 'page' and key != 'format' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-file-pdf me-1"></i> PDF
+                </a>
+                <a href="{% url 'payments:export_transactions' %}?format=xlsx{% for key, value in request.GET.items %}{% if key != 'page' and key != 'format' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-file-excel me-1"></i> Excel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Initialize date pickers
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr("#start_date", {
+                dateFormat: "Y-m-d",
+                allowInput: true
+            });
+            
+            flatpickr("#end_date", {
+                dateFormat: "Y-m-d",
+                allowInput: true
+            });
+        }
+    });
+</script>
+{% endblock %}

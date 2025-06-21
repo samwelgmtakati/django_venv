@@ -1,0 +1,149 @@
+{% extends 'jobs/base.html' %}
+
+{% block page_title %}Delete Job{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{% url 'jobs:job_list' %}">My Jobs</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'jobs:job_detail' object.pk %}">{{ object.title|truncatechars:30 }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Delete</li>
+{% endblock %}
+
+{% block header_actions %}
+    <a href="{% url 'jobs:job_detail' object.pk %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Job
+    </a>
+{% endblock %}
+
+{% block job_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i> Confirm Deletion</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <i class="bi bi-trash text-danger" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4>Are you sure you want to delete this job?</h4>
+                    <p class="text-muted">
+                        This action cannot be undone. All data associated with this job will be permanently removed.
+                    </p>
+                    
+                    <div class="alert alert-warning text-start">
+                        <h6 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>Warning</h6>
+                        <p class="mb-0">
+                            Deleting this job will also remove:
+                        </p>
+                        <ul class="mb-0">
+                            <li>All proposals and messages related to this job</li>
+                            <li>Any contracts or agreements associated with this job</li>
+                            <li>All attachments and files uploaded for this job</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ object.title }}</h5>
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                <span class="badge {% if object.status == 'published' %}bg-success{% elif object.status == 'draft' %}bg-warning{% elif object.status == 'in_progress' %}bg-info{% else %}bg-danger{% endif %}">
+                                    {{ object.get_status_display }}
+                                </span>
+                                {% if object.category %}
+                                    <span class="badge bg-light text-dark">
+                                        {{ object.category.name }}
+                                    </span>
+                                {% endif %}
+                                <span class="badge bg-light text-dark">
+                                    {{ object.get_job_type_display }}
+                                </span>
+                            </div>
+                            <p class="card-text text-muted small">
+                                Posted {{ object.created_at|timesince }} ago • 
+                                {{ object.proposals.count }} proposal{{ object.proposals.count|pluralize }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="post" class="text-center">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'jobs:job_detail' object.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i> Yes, Delete Permanently
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Alternatives to Deletion</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 text-primary me-3">
+                                <i class="bi bi-archive" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Archive Instead</h6>
+                                <p class="small text-muted mb-0">
+                                    Hide this job from your active listings while preserving all data.
+                                </p>
+                                <form method="post" action="{% url 'jobs:update_job_status' object.pk %}" class="mt-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="archived">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-archive me-1"></i> Archive Job
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 text-primary me-3">
+                                <i class="bi bi-pencil-square" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Edit Instead</h6>
+                                <p class="small text-muted mb-0">
+                                    Make changes to this job posting instead of deleting it.
+                                </p>
+                                <a href="{% url 'jobs:job_update' object.pk %}" class="btn btn-sm btn-outline-primary mt-2">
+                                    <i class="bi bi-pencil me-1"></i> Edit Job
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add any custom JavaScript here if needed
+$(document).ready(function() {
+    // Prevent form resubmission on page refresh
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+    
+    // Add animation to the delete button
+    $('button[type="submit"]').on('click', function() {
+        $(this).prop('disabled', true);
+        $(this).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Deleting...');
+    });
+});
+</script>
+{% endblock %}

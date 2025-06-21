@@ -1,0 +1,217 @@
+{% extends 'home/base.html' %}
+{% load static %}
+{% block content %}
+    <!-- Hero Section -->
+    <section class="hero-section py-5">
+        <div class="container">
+            <div class="row align-items-center min-vh-75">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">Find the perfect freelance services for your business</h1>
+                    <p class="lead mb-4">
+                        Connect with talented freelancers or start selling your services. Join thousands of users who trust Freelance Market.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="{% url 'register' %}?role=client"
+                           class="btn btn-primary btn-lg">Hire Talent</a>
+                        <a href="{% url 'register' %}?role=freelancer"
+                           class="btn btn-outline-primary btn-lg">Become a Freelancer</a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c"
+                         alt="Freelancers working"
+                         class="img-fluid rounded-3 shadow">
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Features Section -->
+    <section id="features" class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Why Choose Us</h2>
+                <p class="lead text-muted">We provide the best platform for clients and freelancers to connect</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mx-auto mb-4">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <h5 class="card-title">Top Talent</h5>
+                            <p class="card-text">Connect with skilled professionals from around the world.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mx-auto mb-4">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <h5 class="card-title">Secure Payments</h5>
+                            <p class="card-text">Your payments are protected with our secure escrow system.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="feature-icon mx-auto mb-4">
+                                <i class="bi bi-headset"></i>
+                            </div>
+                            <h5 class="card-title">24/7 Support</h5>
+                            <p class="card-text">Our support team is always here to help you.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">How It Works</h2>
+                <p class="lead text-muted">Get started in just a few simple steps</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="step-number mb-3">1</div>
+                        <h5>Create an Account</h5>
+                        <p>Sign up as a client or freelancer in just a few minutes.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="step-number mb-3">2</div>
+                        <h5>Post or Find Work</h5>
+                        <p>Post your project or browse available jobs and services.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="step-number mb-3">3</div>
+                        <h5>Get Started</h5>
+                        <p>Connect, collaborate, and get your work done.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Testimonials Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">What Our Users Say</h2>
+                <p class="lead text-muted">Hear from businesses and freelancers who found success with us</p>
+            </div>
+            <div class="row g-4">
+                <!-- Testimonial 1 -->
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://randomuser.me/api/portraits/women/43.jpg"
+                                     class="rounded-circle me-3"
+                                     width="50"
+                                     height="50"
+                                     alt="Sarah Johnson">
+                                <div>
+                                    <h5 class="mb-0">Sarah Johnson</h5>
+                                    <span class="text-muted small">Web Developer</span>
+                                </div>
+                            </div>
+                            <p class="card-text">
+                                "This platform helped me find amazing clients and projects that match my skills perfectly. The payment protection gives me peace of mind."
+                            </p>
+                            <div class="text-warning">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Testimonial 2 -->
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://randomuser.me/api/portraits/men/32.jpg"
+                                     class="rounded-circle me-3"
+                                     width="50"
+                                     height="50"
+                                     alt="Michael Chen">
+                                <div>
+                                    <h5 class="mb-0">Michael Chen</h5>
+                                    <span class="text-muted small">Startup Founder</span>
+                                </div>
+                            </div>
+                            <p class="card-text">
+                                "The quality of freelancers here is exceptional. We found our lead developer and two designers within a week. The platform makes collaboration seamless."
+                            </p>
+                            <div class="text-warning">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-half"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Testimonial 3 -->
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://randomuser.me/api/portraits/women/65.jpg"
+                                     class="rounded-circle me-3"
+                                     width="50"
+                                     height="50"
+                                     alt="Emily Rodriguez">
+                                <div>
+                                    <h5 class="mb-0">Emily Rodriguez</h5>
+                                    <span class="text-muted small">Graphic Designer</span>
+                                </div>
+                            </div>
+                            <p class="card-text">
+                                "As a freelance designer, finding consistent work was always a challenge. This platform changed everything. I now have long-term clients and a steady income."
+                            </p>
+                            <div class="text-warning">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- View More Link -->
+            <div class="text-center mt-5">
+                <a href="{% url 'home:testimonials' %}" class="btn btn-outline-primary">
+                    View More Testimonials <i class="bi bi-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+    <!-- CTA Section -->
+    <section class="py-5 bg-primary text-white">
+        <div class="container text-center">
+            <h2 class="fw-bold mb-4">Ready to get started?</h2>
+            <p class="lead mb-4">Join thousands of satisfied clients and freelancers.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'register' %}?role=client" class="btn btn-light btn-lg">Hire Talent</a>
+                <a href="{% url 'register' %}?role=freelancer"
+                   class="btn btn-outline-light btn-lg">Become a Freelancer</a>
+            </div>
+        </div>
+    </section>
+{% endblock %}

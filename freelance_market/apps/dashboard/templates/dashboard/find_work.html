@@ -1,0 +1,174 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Find Work - Freelance Market{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Available Jobs</h1>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filter Jobs</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="category" class="form-label">Category</label>
+                    <select name="category" id="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if selected_category|stringformat:'s' == category.id|stringformat:'s' %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="job_type" class="form-label">Job Type</label>
+                    <select name="job_type" id="job_type" class="form-select">
+                        <option value="">All Types</option>
+                        {% for key, value in job_types.items %}
+                            <option value="{{ key }}" {% if selected_job_type == key %}selected{% endif %}>
+                                {{ value }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="experience" class="form-label">Experience Level</label>
+                    <select name="experience" id="experience" class="form-select">
+                        <option value="">All Levels</option>
+                        {% for key, value in experience_levels.items %}
+                            <option value="{{ key }}" {% if selected_experience == key %}selected{% endif %}>
+                                {{ value }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Jobs List -->
+    <div class="row">
+        <div class="col-12">
+            {% if jobs %}
+                {% for job in jobs %}
+                    <div class="card shadow mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <h4 class="card-title mb-1">
+                                    <a href="{% url 'jobs:job_detail' job.slug %}" class="text-dark">{{ job.title }}</a>
+                                    {% if job.is_featured %}
+                                        <span class="badge bg-warning text-dark ms-2">Featured</span>
+                                    {% endif %}
+                                </h4>
+                                <div class="text-end">
+                                    {% if job.budget %}
+                                        <h5 class="text-primary mb-0">TZS {{ job.budget|floatformat:2|intcomma }}</h5>
+                                        <small class="text-muted">Budget</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-user me-1"></i> {{ job.client.get_full_name|default:job.client.username }}
+                                <span class="mx-2">•</span>
+                                <i class="far fa-clock me-1"></i> {{ job.created_at|timesince }} ago
+                                {% if job.category %}
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-tag me-1"></i> {{ job.category.name }}
+                                {% endif %}
+                            </p>
+                            
+                            <p class="card-text">{{ job.description|truncatewords:50 }}</p>
+                            
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-2 border-top">
+                                <div class="mb-2 mb-md-0">
+                                    <span class="badge bg-info text-white me-2 mb-1">
+                                        <i class="fas fa-briefcase me-1"></i> {{ job.get_job_type_display }}
+                                    </span>
+                                    <span class="badge bg-secondary text-white mb-1">
+                                        <i class="fas fa-chart-line me-1"></i> {{ job.get_experience_level_display }}
+                                    </span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'jobs:job_detail' job.slug %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i> View Details
+                                    </a>
+                                    <a href="{% url 'jobs:submit_proposal' job.slug %}" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane me-1"></i> Apply Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <!-- Pagination -->
+                {% if jobs.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if jobs.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_job_type %}job_type={{ selected_job_type }}&{% endif %}{% if selected_experience %}experience={{ selected_experience }}&{% endif %}page={{ jobs.previous_page_number }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo; Previous</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">&laquo; Previous</span>
+                            </li>
+                        {% endif %}
+                        
+                        {% for i in jobs.paginator.page_range %}
+                            {% if jobs.number == i %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ i }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_job_type %}job_type={{ selected_job_type }}&{% endif %}{% if selected_experience %}experience={{ selected_experience }}&{% endif %}page={{ i }}">{{ i }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if jobs.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_job_type %}job_type={{ selected_job_type }}&{% endif %}{% if selected_experience %}experience={{ selected_experience }}&{% endif %}page={{ jobs.next_page_number }}" aria-label="Next">
+                                    <span>Next &raquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Next &raquo;</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-4x text-gray-300 mb-3"></i>
+                    <h4 class="text-muted">No jobs found</h4>
+                    <p class="text-muted">Try adjusting your search filters or check back later for new job postings</p>
+                    <a href="{% url 'dashboard:find_work' %}" class="btn btn-primary mt-3">
+                        <i class="fas fa-sync-alt me-2"></i>Clear Filters
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% load review_tags %}
+
+<span class="badge bg-light text-dark {{ size_class }} d-inline-flex align-items-center">
+    <span class="me-1">{% star_rating rating %}</span>
+    <span class="ms-1">{{ rating|floatformat:1 }}</span>
+</span>

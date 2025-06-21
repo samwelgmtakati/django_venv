@@ -1,0 +1,95 @@
+{% extends 'payments/base.html' %}
+
+{% block page_title %}Payment Dashboard{% endblock %}
+
+{% block page_actions %}
+    {% if user.is_freelancer %}
+    <a href="{% url 'payments:withdraw' %}" class="btn btn-primary">
+        <i class="bi bi-bank2 me-1"></i> Withdraw Funds
+    </a>
+    {% endif %}
+{% endblock %}
+
+{% block payment_content %}
+<div class="row">
+    <!-- Balance Card -->
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">Available Balance</h5>
+                    <i class="bi bi-wallet2 fs-4 text-primary"></i>
+                </div>
+                <h2 class="mb-4">TZS 0.00</h2>
+                <div class="d-grid">
+                    {% if user.is_freelancer %}
+                    <a href="{% url 'payments:withdraw' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-up-circle me-1"></i> Withdraw
+                    </a>
+                    {% else %}
+                    <button class="btn btn-outline-primary" disabled>Add Payment Method</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Payouts -->
+    {% if user.is_freelancer %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">Pending Payouts</h5>
+                    <i class="bi bi-clock-history fs-4 text-warning"></i>
+                </div>
+                <h2 class="mb-4">TZS 0.00</h2>
+                <p class="text-muted small mb-0">Will be available on your next payout date</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Transaction History Preview -->
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">Recent Transactions</h5>
+                    <a href="{% url 'payments:transactions' %}" class="btn btn-sm btn-link">View All</a>
+                </div>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">No recent transactions</h6>
+                                <small class="text-muted">Your transactions will appear here</small>
+                            </div>
+                            <span class="text-muted">TZS 0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payout Method Section -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">Payout Method</h5>
+            <button class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-plus-lg me-1"></i> Add Method
+            </button>
+        </div>
+        <p class="text-muted">
+            {% if user.is_freelancer %}
+            Add a bank account or payment method to receive your earnings.
+            {% else %}
+            Add a payment method to pay for services.
+            {% endif %}
+        </p>
+    </div>
+</div>
+{% endblock %}

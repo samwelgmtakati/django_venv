@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Proposal from {{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="{% if request.GET.from_job %}{% url 'jobs:job_detail' proposal.job.slug %}{% else %}{% url 'jobs:proposal_list' proposal.job.slug %}{% endif %}" class="btn btn-outline-secondary mb-3">
+            <i class="bi bi-arrow-left me-1"></i> Back to {% if request.GET.from_job %}Job{% else %}Proposals{% endif %}
+        </a>
+        
+        <div class="card">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h4 mb-0">
+                            Proposal for: {{ proposal.job.title }}
+                        </h1>
+                        <p class="mb-0 text-muted">
+                            Submitted on {{ proposal.created_at|date:"F j, Y" }}
+                            {% if proposal.updated_at and proposal.updated_at != proposal.created_at %}
+                                • Updated {{ proposal.updated_at|timesince }} ago
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="d-flex flex-column align-items-end">
+                        <span class="badge {% if proposal.status == 'pending' %}bg-info{% elif proposal.status == 'accepted' %}bg-success{% elif proposal.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %} mb-2">
+                            {{ proposal.get_status_display }}
+                        </span>
+                        {% if proposal.status == 'accepted' and proposal.responded_at %}
+                            <small class="text-muted">Accepted on {{ proposal.responded_at|date:"M j, Y" }}</small>
+                        {% elif proposal.status == 'rejected' and proposal.responded_at %}
+                            <small class="text-muted">Rejected on {{ proposal.responded_at|date:"M j, Y" }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="flex-shrink-0 me-3">
+                                {% if proposal.freelancer.profile_photo %}
+                                    <img src="{{ proposal.freelancer.profile_photo.url }}" 
+                                         alt="{{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}"
+                                         class="rounded-circle" width="60" height="60">
+                                {% else %}
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px;">
+                                        <i class="bi bi-person-fill text-muted fs-5"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h2 class="h5 mb-1">
+                                    {{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}
+                                </h2>
+                                {% if proposal.freelancer.profile_title %}
+                                    <p class="text-muted mb-2">{{ proposal.freelancer.profile_title }}</p>
+                                {% endif %}
+                                <div class="d-flex flex-wrap gap-2">
+                                    <span class="badge bg-light text-dark">
+                                        <i class="bi bi-currency-exchange me-1"></i>
+                                        TZS {{ proposal.bid_amount|default:"0.00" }} Budget
+                                    </span>
+                                    <span class="badge bg-light text-dark">
+                                        <i class="bi bi-clock me-1"></i>
+                                        {{ proposal.estimated_days|default:"N/A" }} Days
+                                    </span>
+                                    {% if proposal.freelancer.profile.country %}
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-geo-alt me-1"></i>
+                                            {{ proposal.freelancer.profile.country }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h3 class="h5 mb-3">Cover Letter</h3>
+                            <div class="bg-light p-3 rounded">
+                                {{ proposal.cover_letter|linebreaksbr|urlize }}
+                            </div>
+                        </div>
+                        
+                        {% if proposal.attachments.exists %}
+                            <div class="mb-4">
+                                <h3 class="h5 mb-3">Attachments</h3>
+                                <div class="list-group">
+                                    {% for attachment in proposal.attachments.all %}
+                                        <a href="{{ attachment.file.url }}" class="list-group-item list-group-item-action" target="_blank">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-paperclip me-2"></i>
+                                                <span class="text-truncate">{{ attachment.filename }}</span>
+                                                <small class="text-muted ms-auto">{{ attachment.file.size|filesizeformat }}</small>
+                                            </div>
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h3 class="h6 mb-0">Proposal Details</h3>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-4">
+                                    <li class="mb-2">
+                                        <strong>Proposal Status:</strong>
+                                        <span class="float-end">
+                                            <span class="badge {% if proposal.status == 'pending' %}bg-info{% elif proposal.status == 'accepted' %}bg-success{% elif proposal.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                                {{ proposal.get_status_display }}
+                                            </span>
+                                        </span>
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>Submitted:</strong>
+                                        <span class="float-end">{{ proposal.created_at|date:"M j, Y" }}</span>
+                                    </li>
+                                    {% if proposal.responded_at %}
+                                        <li class="mb-2">
+                                            <strong>{% if proposal.status == 'accepted' %}Accepted{% else %}Rejected{% endif %}:</strong>
+                                            <span class="float-end">{{ proposal.responded_at|date:"M j, Y" }}</span>
+                                        </li>
+                                    {% endif %}
+                                    <li class="mb-2">
+                                        <strong>Bid Amount:</strong>
+                                        <span class="float-end">TZS {{ proposal.bid_amount|floatformat:2 }}</span>
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>Estimated Days:</strong>
+                                        <span class="float-end">{{ proposal.estimated_days }} days</span>
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>Job Type:</strong>
+                                        <span class="float-end">{{ proposal.job.get_job_type_display }}</span>
+                                    </li>
+                                </ul>
+                                
+                                {% if request.user == proposal.job.client %}
+                                    <!-- Client Actions -->
+                                    {% if proposal.status == 'pending' %}
+                                        <div class="d-grid gap-2">
+                                            <form method="post" action="{% url 'jobs:accept_proposal' job_slug=proposal.job.slug pk=proposal.pk %}" class="mb-2">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-success w-100">
+                                                    <i class="bi bi-check-circle me-1"></i> Accept Proposal
+                                                </button>
+                                            </form>
+                                            <form method="post" action="{% url 'jobs:reject_proposal' job_slug=proposal.job.slug pk=proposal.pk %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-outline-danger w-100" 
+                                                        onclick="return confirm('Are you sure you want to reject this proposal?')">
+                                                    <i class="bi bi-x-circle me-1"></i> Reject Proposal
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% elif proposal.status == 'accepted' %}
+                                        <div class="alert alert-success">
+                                            <i class="bi bi-check-circle-fill me-1"></i>
+                                            You've accepted this proposal on {{ proposal.responded_at|date:"M j, Y" }}.
+                                        </div>
+                                        <a href="{% url 'messages:conversation' user_id=proposal.freelancer.id %}" class="btn btn-primary w-100">
+                                            <i class="bi bi-chat-dots me-1"></i> Message {{ proposal.freelancer.get_short_name }}
+                                        </a>
+                                    {% endif %}
+                                {% elif request.user == proposal.freelancer %}
+                                    <!-- Freelancer View -->
+                                    {% if proposal.status == 'accepted' %}
+                                        <div class="alert alert-success">
+                                            <i class="bi bi-check-circle-fill me-1"></i>
+                                            Your proposal was accepted on {{ proposal.responded_at|date:"M j, Y" }}.
+                                        </div>
+                                        <a href="{% url 'messages:conversation' user_id=proposal.job.client.id %}" class="btn btn-primary w-100 mb-2">
+                                            <i class="bi bi-chat-dots me-1"></i> Message Client
+                                        </a>
+                                        <a href="{% url 'jobs:job_detail' slug=proposal.job.slug %}" class="btn btn-outline-primary w-100">
+                                            <i class="bi bi-briefcase me-1"></i> View Job Details
+                                        </a>
+                                    {% elif proposal.status == 'rejected' %}
+                                        <div class="alert alert-warning">
+                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                            This proposal was not selected by the client.
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle-fill me-1"></i>
+                                            Your proposal is under review by the client.
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                                
+                                <hr class="my-4">
+                                
+                                <h6 class="mb-3">About the {% if request.user == proposal.freelancer %}Client{% else %}Freelancer{% endif %}</h6>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="flex-shrink-0 me-3">
+                                        {% if request.user == proposal.freelancer %}
+                                            <!-- Client Info -->
+                                            {% if proposal.job.client.profile_photo %}
+                                                <img src="{{ proposal.job.client.profile_photo.url }}" 
+                                                     class="rounded-circle" width="60" height="60" 
+                                                     alt="{{ proposal.job.client.get_full_name|default:proposal.job.client.username }}">
+                                            {% else %}
+                                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" 
+                                                     style="width: 60px; height: 60px;">
+                                                    <i class="bi bi-person-fill text-muted" style="font-size: 1.5rem;"></i>
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <!-- Freelancer Info -->
+                                            {% if proposal.freelancer.profile_photo %}
+                                                <img src="{{ proposal.freelancer.profile_photo.url }}" 
+                                                     class="rounded-circle" width="60" height="60" 
+                                                     alt="{{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}">
+                                            {% else %}
+                                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" 
+                                                     style="width: 60px; height: 60px;">
+                                                    <i class="bi bi-person-fill text-muted" style="font-size: 1.5rem;"></i>
+                                                </div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">
+                                            {% if request.user == proposal.freelancer %}
+                                                {{ proposal.job.client.get_full_name|default:proposal.job.client.username }}
+                                            {% else %}
+                                                {{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}
+                                            {% endif %}
+                                        </h6>
+                                        <small class="text-muted">
+                                            {% if request.user == proposal.freelancer %}
+                                                {% if proposal.job.client.profile_title %}
+                                                    {{ proposal.job.client.profile_title }}
+                                                {% else %}
+                                                    Client
+                                                {% endif %}
+                                            {% else %}
+                                                {% if proposal.freelancer.profile_title %}
+                                                    {{ proposal.freelancer.profile_title }}
+                                                {% else %}
+                                                    Freelancer
+                                                {% endif %}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                {% if request.user == proposal.freelancer or request.user == proposal.job.client %}
+                                    <a href="{% url 'messages:conversation' user_id=request.user == proposal.freelancer|yesno:proposal.job.client.id,proposal.freelancer.id %}" 
+                                       class="btn btn-outline-primary w-100">
+                                        <i class="bi bi-chat-left-text me-1"></i> Send Message
+                                    </a>
+                                {% endif %}
+                                
+                                <div class="mt-4">
+                                    <h6 class="mb-3">Job Details</h6>
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2">
+                                            <strong>Job Status:</strong>
+                                            <span class="float-end">
+                                                <span class="badge {% if proposal.job.status == 'published' %}bg-info{% elif proposal.job.status == 'in_progress' %}bg-primary{% elif proposal.job.status == 'completed' %}bg-success{% else %}bg-secondary{% endif %}">
+                                                    {{ proposal.job.get_status_display }}
+                                                </span>
+                                            </span>
+                                        </li>
+                                        <li class="mb-2">
+                                            <strong>Budget:</strong>
+                                            <span class="float-end">
+                                                {% if proposal.job.job_type == 'hourly' %}
+                                                    TZS {{ proposal.job.min_hourly_rate|floatformat:2 }} - TZS {{ proposal.job.max_hourly_rate|floatformat:2 }} / hr
+                                                {% else %}
+                                                    TZS {{ proposal.job.budget|floatformat:2 }}
+                                                {% endif %}
+                                            </span>
+                                        </li>
+                                        <li class="mb-2">
+                                            <strong>Experience Level:</strong>
+                                            <span class="float-end">{{ proposal.job.get_experience_level_display }}</span>
+                                        </li>
+                                        <li class="mb-2">
+                                            <strong>Posted:</strong>
+                                            <span class="float-end">{{ proposal.job.created_at|timesince }} ago</span>
+                                        </li>
+                                        {% if proposal.job.deadline %}
+                                            <li class="mb-2">
+                                                <strong>Deadline:</strong>
+                                                <span class="float-end">{{ proposal.job.deadline|date:"M j, Y" }}</span>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                    
+                                    <a href="{% url 'jobs:job_detail' slug=proposal.job.slug %}" class="btn btn-outline-secondary w-100 mt-2">
+                                        <i class="bi bi-eye me-1"></i> View Job
+                                    </a>
+                                </div>
+
+
+                                    {% if proposal.rejected_at %}
+                                        <li class="mb-2">
+                                            <strong>Rejected:</strong>
+                                            <span class="float-end">{{ proposal.rejected_at|date:"M d, Y" }}</span>
+                                        </li>
+                                    {% endif %}
+                                    <li class="mb-2">
+                                        <strong>Bid Amount:</strong>
+                                        <span class="float-end">TZS {{ proposal.bid_amount|default:"0.00"|floatformat:0 }}</span>
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>Timeline:</strong>
+                                        <span class="float-end">{{ proposal.estimated_days|default:"N/A" }} days</span>
+                                    </li>
+                                </ul>
+                                
+                                {% if can_accept or can_reject %}
+                                    <hr>
+                                    <div class="d-grid gap-2">
+                                        {% if can_accept %}
+                                            <form action="{% url 'jobs:accept_proposal' job.slug proposal.id %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="bi bi-check-circle me-1"></i> Accept Proposal
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        
+                                        {% if can_reject %}
+                                            <form action="{% url 'jobs:reject_proposal' job.slug proposal.id %}" method="post" class="d-inline ms-2">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to reject this proposal?')">
+                                                    <i class="bi bi-x-circle me-1"></i> Reject
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if proposal.freelancer.profile.bio %}
+                            <div class="card border-0 shadow-sm mt-4">
+                                <div class="card-header bg-light">
+                                    <h3 class="h6 mb-0">About the Freelancer</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-0">{{ proposal.freelancer.profile.bio|truncatewords:50 }}</p>
+                                    <div class="text-end mt-2">
+                                        <a href="{% url 'profiles:public_profile' proposal.freelancer.username %}" class="btn btn-sm btn-outline-primary">
+                                            View Full Profile
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

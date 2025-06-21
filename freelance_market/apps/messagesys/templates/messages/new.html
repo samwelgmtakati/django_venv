@@ -1,0 +1,80 @@
+{% extends "messages/base.html" %}
+
+{% block message_title %}Compose Message{% endblock message_title %}
+
+{% block message_heading %}
+    <div class="d-flex justify-content-between align-items-center w-100">
+        <span>Compose New Message</span>
+    </div>
+{% endblock message_heading %}
+
+{% block message_content %}
+    <form method="post" id="composeForm">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="recipient" class="form-label">To:</label>
+            <select class="form-select" id="recipient" name="recipient" required>
+                <option value="" disabled {% if not recipient %}selected{% endif %}>Select a recipient</option>
+                {% for user in users %}
+                    <option value="{{ user.id }}" {% if recipient and recipient.id == user.id %}selected{% endif %}>
+                        {{ user.get_full_name|default:user.username }} ({{ user.email }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="mb-3">
+            <label for="subject" class="form-label">Subject:</label>
+            <input type="text" class="form-control" id="subject" name="subject" 
+                   value="{{ subject|default:'' }}" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="body" class="form-label">Message:</label>
+            <textarea class="form-control" id="body" name="body" rows="10" required>{{ body|default:'' }}</textarea>
+            <div class="form-text">
+                You can use basic HTML tags for formatting.
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'messages:inbox' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-1"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane me-1"></i> Send Message
+            </button>
+        </div>
+    </form>
+{% endblock message_content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-resize textarea
+    const textarea = document.getElementById('body');
+    if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = (textarea.scrollHeight) + 'px';
+        
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
+    
+    // Form submission handling
+    const form = document.getElementById('composeForm');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Sending...';
+            }
+        });
+    }
+});
+</script>
+{% endblock extra_js %}

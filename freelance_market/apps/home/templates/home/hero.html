@@ -1,0 +1,17 @@
+<section class="hero-section pt-5 mt-4">
+    <div class="container">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold pt-5 mb-4">Find the perfect freelance services for your business</h1>
+                <p class="lead mb-4">Connect with talented freelancers or start selling your services. Join thousands of users who trust Freelance Market.</p>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'register' %}?role=client" class="btn btn-primary btn-lg">Hire Talent</a>
+                    <a href="{% url 'register' %}?role=freelancer" class="btn btn-outline-primary btn-lg">Become a Freelancer</a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c" alt="Freelancers working" class="img-fluid rounded-3 shadow">
+            </div>
+        </div>
+    </div>
+</section>

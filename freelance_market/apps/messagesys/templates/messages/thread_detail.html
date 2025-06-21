@@ -1,0 +1,256 @@
+{% extends "messages/base.html" %}
+{% load static %}
+
+{% block message_title %}{{ thread.subject|default:"No Subject" }}{% endblock message_title %}
+
+{% block message_heading %}
+    {% if thread.job %}
+        <a href="{{ thread.job.get_absolute_url }}" class="text-decoration-none">
+            <span class="badge bg-primary">{{ thread.job.title|truncatechars:30 }}</span>
+        </a>
+    {% endif %}
+    {{ thread.subject|default:"No Subject" }}
+{% endblock message_heading %}
+
+{% block message_content %}
+<div class="thread-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                    <div class="d-flex align-items-center">
+                        <div class="participant-avatars me-3">
+                            {% for participant in thread.participants.all %}
+                                {% if participant != request.user %}
+                                    {% if participant.profile_picture %}
+                                        <img src="{{ participant.profile_picture.url }}" 
+                                             class="rounded-circle border border-2 border-white participant-avatar" 
+                                             alt="{{ participant.get_display_name }}"
+                                             width="40" height="40" loading="lazy">
+                                    {% else %}
+                                        <div class="avatar-text bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center participant-initials">
+                                            {{ participant.get_initials }}
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div>
+                            <h5 class="mb-0">
+                                {% for participant in thread.participants.all %}
+                                    {% if participant != request.user %}
+                                        {{ participant.get_display_name }}{% if not forloop.last %}, {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            </h5>
+                            <small class="text-muted">
+                                {{ thread.messages.count }} message{{ thread.messages.count|pluralize }}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        
+                        <a href="{% url 'messages:delete_thread' thread.id %}" 
+                           class="btn btn-sm btn-outline-danger" 
+                           data-bs-toggle="modal"
+                           data-bs-target="#deleteThreadModal">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="message-thread">
+                        {% for message in messages %}
+                        <div class="message-item {% if message.sender == request.user %}message-sent{% else %}message-received{% endif %} p-3 border-bottom">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    {% if message.sender.profile_picture %}
+                                        <img src="{{ message.sender.profile_picture.url }}" 
+                                             class="rounded-circle message-sender-avatar" 
+                                             alt="{{ message.sender.get_display_name }}"
+                                             width="40" 
+                                             height="40"
+                                             loading="lazy">
+                                    {% else %}
+                                        <div class="avatar-text bg-primary text-white rounded-circle d-flex align-items-center justify-content-center message-sender-initials">
+                                            {{ message.sender.get_initials }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div>
+                                            <strong>{{ message.sender.get_display_name }}</strong>
+                                            <small class="text-muted ms-2">
+                                                {{ message.sent_at|date:"M j, Y g:i A" }}
+                                                {% if not message.read_at and message.recipient == request.user %}
+                                                    <span class="badge bg-success ms-1">New</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <div>
+                                            {% if message.sender == request.user %}
+                                                <span class="badge bg-light text-dark read-status">
+                                                    <i class="fas fa-check"></i>
+                                                    {% if message.read_at %}
+                                                        <i class="fas fa-check"></i>
+                                                    {% endif %}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="message-content">
+                                        {{ message.body|linebreaksbr }}
+                                    </div>
+                                    {% if message.attachments.exists %}
+                                    <div class="mt-2">
+                                        {% for attachment in message.attachments.all %}
+                                        <div class="attachment-item">
+                                            <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none">
+                                                <i class="fas fa-paperclip me-1"></i>
+                                                {{ attachment.filename }}
+                                                <small class="text-muted ms-1">({{ attachment.filesize }})</small>
+                                            </a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="p-3 border-top">
+                        <form method="post" action="{% url 'messages:reply_to_thread' thread_id=thread.id %}" class="mb-0">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <input type="text" name="message" class="form-control" 
+                                       placeholder="Type your message..." required>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-1"></i> Send
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+.message-thread {
+    scroll-behavior: smooth;
+}
+
+.message-item {
+    transition: background-color 0.2s;
+    color: #212529;
+}
+
+.message-item .message-content {
+    color: #212529;
+}
+
+.message-item:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.message-sent {
+    /* Sender (current user) messages aligned right */
+}
+
+.message-received {
+    /* Other participant messages aligned left */
+}
+
+.message-sent .d-flex {
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+}
+
+.message-content {
+    display: inline-block;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.8rem;
+    max-width: 75%;
+    word-wrap: break-word;
+ }
+
+.message-sent .message-content {
+    background-color: #dcf8c6; /* WhatsApp green */
+    margin-left: auto;  /* push bubble to the right */
+    text-align: left;   /* keep text inside bubble left */
+    color: #212529;
+ }
+
+.message-sent .flex-grow-1 {
+    text-align: right;  /* meta (name/time) aligns right */
+ }
+
+.message-sent .read-status {
+    order: -1; /* appear first in row-reverse so rightmost */
+    margin-right: 0;
+ }
+
+.message-received .message-content {
+    background-color: #f1f0f0; /* light grey */
+}
+
+.attachment-item {
+    display: inline-block;
+    margin-right: 10px;
+    margin-top: 5px;
+    padding: 3px 8px;
+    background-color: #f1f3f5;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.attachment-item a {
+    color: #495057;
+    text-decoration: none;
+}
+
+.attachment-item a:hover {
+    color: #0d6efd;
+}
+
+.participant-initials,
+.message-sender-initials {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+}
+
+.message-sender-avatar {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Auto-scroll to bottom of message thread on page load
+document.addEventListener('DOMContentLoaded', function() {
+    var messageThread = document.querySelector('.message-thread');
+    if (messageThread) {
+        messageThread.scrollTop = messageThread.scrollHeight;
+    }
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock extra_js %}

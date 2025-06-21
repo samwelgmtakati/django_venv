@@ -1,0 +1,352 @@
+{% extends "dashboard/base.html" %}
+{% load humanize i18n %}
+
+{% block title %}{% if order %}{{ order.job.title }} - Order #{{ order.id }}{% else %}No Orders Found{% endif %}{% endblock title %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Order Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">My Orders</li>
+                </ol>
+            </nav>
+            
+            {% if order %}
+                <h1 class="h2">{{ order.job.title }}</h1>
+                <div class="d-flex align-items-center text-muted">
+                    <span class="badge bg-{{ order.get_status_badge_class }} me-2">{{ order.get_status_display }}</span>
+                    <small>Created {{ order.created_at|timesince }} ago</small>
+                    
+                    <!-- Order Navigation -->
+                    {% if pagination.total_orders > 0 %}
+                    <div class="ms-auto d-flex align-items-center">
+                        <small class="me-2">{{ pagination.current_index }} of {{ pagination.total_orders }}</small>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% if pagination.has_previous %}?order_id={{ pagination.previous_order_id }}{% else %}#{% endif %}" 
+                               class="btn btn-outline-secondary {% if not pagination.has_previous %}disabled{% endif %}"
+                               {% if not pagination.has_previous %}tabindex="-1" aria-disabled="true"{% endif %}>
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            <a href="{% if pagination.has_next %}?order_id={{ pagination.next_order_id }}{% else %}#{% endif %}" 
+                               class="btn btn-outline-secondary {% if not pagination.has_next %}disabled{% endif %}"
+                               {% if not pagination.has_next %}tabindex="-1" aria-disabled="true"{% endif %}>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <h1 class="h2">No Orders Found</h1>
+                <p class="text-muted">You don't have any orders yet.</p>
+                <a href="{% url 'dashboard:home' %}" class="btn btn-primary mt-2">
+                    <i class="fas fa-home me-1"></i> Back to Dashboard
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if order %}
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Order Status Timeline -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Order Progress</h5>
+                    <div class="timeline">
+                        {% include 'orders/partials/status_timeline.html' %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Deliveries -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Deliveries</h5>
+                    {% if can_deliver %}
+                        <a href="{% url "orders:deliver" order.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i>
+                            {% if order.status == 'revision_requested' %}Submit Revision{% else %}Deliver Work{% endif %}
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if deliveries %}
+                        {% for delivery in deliveries %}
+                            {% include 'orders/partials/delivery_item.html' with delivery=delivery %}
+                            {% if not forloop.last %}<hr>{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                            <p class="mb-0">No deliveries yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Order Requirements -->
+            {% if order.requirements %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Requirements</h5>
+                </div>
+                <div class="card-body">
+                    <div class="requirements-content">
+                        {{ order.requirements|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if show_review_section %}
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{% trans 'Reviews' %}</h5>
+                    {% if can_review %}
+                        <a href="{% url 'reviews:create' order.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-star-fill me-1"></i>{% trans 'Leave a Review' %}
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    <div id="reviews-container">
+                        {% if reviews %}
+                            {% for review in reviews %}
+                                {% with user=review.reviewer user_type=review.is_client_review|yesno:'Client,Freelancer' %}
+                                    {% include 'reviews/partials/review_item.html' %}
+                                {% endwith %}
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-chat-square-text display-4 text-muted mb-3"></i>
+                                <p class="text-muted mb-0">
+                                    {% if has_reviewed %}
+                                        {% trans 'No reviews from the other party yet.' %}
+                                    {% else %}
+                                        {% trans 'No reviews yet. Be the first to leave one!' %}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if messages %}
+                        <div class="mt-3 px-4">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Success Message (hidden by default) -->
+            <div class="alert alert-success d-none" id="review-success-message">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                Thank you for your review! It has been submitted successfully.
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Order Summary -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Status:</span>
+                        <span class="fw-medium">{{ order.get_status_display }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Amount:</span>
+                        <span class="fw-medium">${{ order.amount|floatformat:2 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Payment Status:</span>
+                        <span class="badge bg-{{ order.get_payment_status_badge_class }}">
+                            {{ order.get_payment_status_display }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Created:</span>
+                        <span>{{ order.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    {% if order.deadline %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Deadline:</span>
+                        <span class="fw-medium">{{ order.deadline|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Time Remaining:</span>
+                        <span class="fw-medium">{{ order.days_remaining }} days</span>
+                    </div>
+                    {% endif %}
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total:</span>
+                        <span>${{ order.amount|floatformat:2 }}</span>
+                    </div>
+
+                    <!-- Payment Actions -->
+                    {% if payment_actions.can_pay %}
+                        <button class="btn btn-success w-100 mt-3" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#paymentModal" 
+                                data-action="pay">
+                            <i class="fas fa-credit-card me-1"></i> Mark as Paid
+                        </button>
+                    {% endif %}
+
+                    {% if payment_actions.can_refund %}
+                        <button class="btn btn-outline-danger w-100 mt-2" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#paymentModal" 
+                                data-action="refund">
+                            <i class="fas fa-undo me-1"></i> Refund Payment
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Order Parties -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Parties</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="small text-muted mb-1">Client</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-2">
+                                <img src="{{ order.client.profile_picture.url|default:'/static/images/default-avatar.png' }}" alt="{{ order.client.get_full_name }}" class="rounded-circle me-2" width="40" height="40" loading="lazy">
+                            </div>
+                            <div>
+                                <div class="fw-medium">{{ order.client.get_full_name|default:order.client.username }}</div>
+                                <small class="text-muted">{{ order.client.email }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h6 class="small text-muted mb-1">Freelancer</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-2">
+                                <img src="{{ order.freelancer.profile_picture.url|default:'/static/images/default-avatar.png' }}" alt="{{ order.freelancer.get_full_name }}" class="rounded-circle me-2" width="40" height="40" loading="lazy">
+                            </div>
+                            <div>
+                                <div class="fw-medium">{{ order.freelancer.get_full_name|default:order.freelancer.username }}</div>
+                                <small class="text-muted">{{ order.freelancer.email }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    {% if can_start %}
+                        <form method="post" action="{% url 'orders:start' order.id %}" class="mb-3">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-play-circle me-1"></i> Start Order
+                            </button>
+                            <p class="small text-muted mt-1 mb-0">
+                                Click to confirm the start of work. The freelancer will be notified to begin working on your order.
+                            </p>
+                        </form>
+                    {% endif %}
+                    
+                    {% if can_approve %}
+                        <form method="post" action="{% url 'orders:approve' order.id %}" class="mb-2">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-check-circle me-1"></i> Approve Delivery
+                            </button>
+                        </form>
+                    {% endif %}
+
+                    {% if can_request_revision %}
+                        <a href="{% url 'orders:request_revision' order.id %}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-redo me-1"></i> Request Revision
+                            <small class="badge bg-primary ms-1">{{ order.revision_count }}/{{ order.max_revisions }}</small>
+                        </a>
+                    {% endif %}
+
+                    <a href="{% url 'messages:new_thread_with_recipient' order.freelancer.id %}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-comments me-1"></i> Message {% if order.client == user %}{{ order.freelancer.get_full_name|default:order.freelancer.username }}{% else %}{{ order.client.get_full_name|default:order.client.username }}{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if order %}
+<!-- Payment Confirmation Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Payment Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="paymentModalMessage">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="paymentActionForm" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock content %}
+
+{% block extra_js %}
+{% if order %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle payment modal
+    const paymentModal = document.getElementById('paymentModal');
+    if (paymentModal) {
+        paymentModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const action = button.getAttribute('data-action');
+            const form = document.getElementById('paymentActionForm');
+            const message = document.getElementById('paymentModalMessage');
+            
+            // Set form action
+            form.action = `/orders/{{ order.id }}/payment/${action}/`;
+            
+            // Set message based on action
+            const messages = {
+                'pay': 'Are you sure you want to mark this order as paid?',
+                'refund': 'Are you sure you want to refund the payment to the client? This action cannot be undone.'
+            };
+            message.textContent = messages[action] || 'Are you sure you want to perform this action?';
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock extra_js %}

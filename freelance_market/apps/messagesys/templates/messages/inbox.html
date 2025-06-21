@@ -1,0 +1,29 @@
+{% extends "messages/thread_list.html" %}
+
+{% block page_title %}Inbox{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+// Mark thread as read when clicking on it
+document.addEventListener('DOMContentLoaded', function() {
+    const threadLinks = document.querySelectorAll('a[href^="/messages/thread/"]');
+    threadLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            const threadId = this.getAttribute('href').split('/').filter(Boolean).pop();
+            if (threadId) {
+                fetch(`/messages/thread/${threadId}/mark-read/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

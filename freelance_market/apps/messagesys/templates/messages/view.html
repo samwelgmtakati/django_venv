@@ -1,0 +1,110 @@
+{% extends "messages/base.html" %}
+
+{% block message_title %}{{ message.subject }}{% endblock %}
+
+{% block message_actions %}
+    <div class="btn-group">
+        <a href="{% url 'messages:reply' message.id %}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-reply me-1"></i> Reply
+        </a>
+        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+            <i class="fas fa-trash-alt me-1"></i> Delete
+        </button>
+    </div>
+{% endblock %}
+
+{% block message_content %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <div>
+                    <h5 class="card-title mb-1">{{ message.subject }}</h5>
+                    <p class="text-muted mb-0">
+                        From: {{ message.sender.get_full_name|default:message.sender.username }}
+                        &lt;{{ message.sender.email }}&gt;
+                    </p>
+                    <p class="text-muted mb-0">
+                        To: {{ message.recipient.get_full_name|default:message.recipient.username }}
+                        &lt;{{ message.recipient.email }}&gt;
+                    </p>
+                </div>
+                <div class="text-end">
+                    <div class="text-muted small">
+                        {{ message.sent_at|date:"F j, Y, g:i a" }}
+                    </div>
+                    {% if message.is_read %}
+                        <span class="badge bg-secondary">Read</span>
+                    {% else %}
+                        <span class="badge bg-primary">Unread</span>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+            <div class="message-body">
+                {{ message.body|linebreaksbr|urlize }}
+            </div>
+        </div>
+    </div>
+
+    {% if message.parent_msg %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Previous Message</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <div>
+                        <strong>From:</strong> 
+                        {{ message.parent_msg.sender.get_full_name|default:message.parent_msg.sender.username }}
+                    </div>
+                    <div class="text-muted small">
+                        {{ message.parent_msg.sent_at|date:"F j, Y, g:i a" }}
+                    </div>
+                </div>
+                <div class="message-body text-muted">
+                    {{ message.parent_msg.body|truncatewords:50|linebreaksbr }}
+                </div>
+                <div class="text-end mt-2">
+                    <a href="{% url 'messages:view' message.parent_msg.id %}" class="btn btn-sm btn-outline-primary">
+                        View full message
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{% url 'messages:inbox' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Inbox
+        </a>
+        <div>
+            <a href="{% url 'messages:reply' message.id %}" class="btn btn-primary">
+                <i class="fas fa-reply me-1"></i> Reply
+            </a>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Delete Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this message? This action cannot be undone.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="post" action="{% url 'messages:delete' message.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt me-1"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

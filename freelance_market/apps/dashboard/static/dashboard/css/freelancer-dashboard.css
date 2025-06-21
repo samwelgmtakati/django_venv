@@ -1,0 +1,853 @@
+/* Freelancer Dashboard Styles */
+:root {
+    --primary: #4361ee;
+    --primary-light: #eef2ff;
+    --secondary: #6c757d;
+    --success: #10b981;
+    --info: #3b82f6;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --light: #f8f9fa;
+    --dark: #1f2937;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-700: #374151;
+    --sidebar-width: 280px;
+    --header-height: 70px;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --progress-width: 50%;
+}
+
+/* Page Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+/* Section Actions */
+.section-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+/* Ensure the Find Work button stays on the right */
+.section-actions .btn-outline-primary {
+    margin-left: auto;
+}
+
+/* Dashboard Layout */
+.freelancer-dashboard {
+    background-color: #f8fafc;
+    min-height: 100vh;
+    padding: 1.5rem 0;
+    color: #1e293b;
+}
+
+.freelancer-dashboard .container-fluid {
+    max-width: 1400px;
+    padding: 0 1.5rem;
+    margin: 0 auto;
+}
+
+/* Typography */
+.freelancer-dashboard h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.5rem;
+}
+
+.freelancer-dashboard h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+}
+
+.freelancer-dashboard h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 1rem;
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+    height: 100%;
+    background: white;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card-header {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Stats Cards */
+.stats-card {
+    border-left: 4px solid #3b82f6;
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0.5rem 0;
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.stat-icon {
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+    font-size: 2.5rem;
+    opacity: 0.1;
+    color: #3b82f6;
+}
+
+/* Project Cards */
+.project-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    height: 100%;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    position: relative;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.project-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    border-color: #cbd5e1;
+}
+
+.project-card .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.project-card .card-body > *:last-child {
+    margin-top: auto;
+}
+
+/* Recommended Jobs */
+.job-item {
+    padding: 1.25rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.job-item:last-child {
+    margin-bottom: 0;
+}
+
+.job-item:hover {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.job-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.job-price {
+    font-weight: 600;
+    color: #10b981;
+    white-space: nowrap;
+    margin-left: 0.5rem;
+}
+
+.job-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.8125rem;
+    color: #64748b;
+}
+
+.job-meta i {
+    margin-right: 0.25rem;
+    opacity: 0.8;
+}
+
+.project-card .card-header {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1.25rem 1.5rem;
+}
+
+.project-card .project-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #1e293b;
+    /* Modern line-clamp with fallbacks */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Standard line-clamp */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Fallback for non-WebKit browsers */
+    max-height: 3em;
+    line-height: 1.5em;
+    /* Standard line-clamp (draft spec) */
+    line-clamp: 2;
+    /* Ensure compatibility */
+    overflow: hidden;
+}
+
+.project-client {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.project-description {
+    color: #64748b;
+    font-size: 0.9375rem;
+    margin: 0.75rem 0;
+    line-height: 1.5;
+    /* Modern line-clamp with fallbacks */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Standard line-clamp */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Fallback for non-WebKit browsers */
+    max-height: 4.5em;
+    line-height: 1.5em;
+    /* Standard line-clamp (draft spec) */
+    line-clamp: 3;
+    /* Ensure compatibility */
+    overflow: hidden;
+}
+
+.project-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.8125rem;
+    color: #64748b;
+    margin: 1rem 0 0.5rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.meta-item i {
+    font-size: 1rem;
+    color: #94a3b8;
+    min-width: 16px;
+    text-align: center;
+}
+
+/* Progress Bars */
+.project-progress {
+    margin: 1.25rem 0 0;
+}
+
+.progress {
+    background-color: #f1f5f9;
+    border-radius: 100px;
+    height: 6px !important;
+    overflow: hidden;
+}
+
+.progress-bar {
+    border-radius: 100px;
+    transition: width 0.6s ease;
+}
+
+/* Avatar */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: #e2e8f0;
+}
+
+.avatar-xs {
+    width: 28px;
+    height: 28px;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-group {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.avatar-group .avatar {
+    margin-left: -10px;
+    border: 2px solid white;
+}
+
+.avatar-group .avatar:first-child {
+    margin-left: 0;
+}
+
+/* Status Badges */
+.status-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50px;
+}
+
+.bg-in-progress {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.bg-client-review {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+/* Hover Effects */
+.hover-bg-light {
+    transition: background-color 0.2s ease;
+}
+
+.hover-bg-light:hover {
+    background-color: #f8fafc;
+}
+
+.project-progress {
+    margin-top: 1.25rem;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* Activity Feed */
+.activity-item {
+    position: relative;
+    padding-left: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-left: 2px solid #e2e8f0;
+}
+
+.activity-item:last-child {
+    border-left-color: transparent;
+}
+
+.activity-item::before {
+    content: '';
+    position: absolute;
+    left: -0.5rem;
+    top: 0.25rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background-color: #3b82f6;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 1px #e2e8f0;
+}
+
+.activity-time {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-bottom: 0.25rem;
+}
+
+.activity-content {
+    font-size: 0.9375rem;
+    color: #1e293b;
+}
+
+/* Skills */
+.skill-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: #f1f5f9;
+    color: #334155;
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.8125rem;
+    margin: 0 0.5rem 0.5rem 0;
+    transition: all 0.2s ease;
+}
+
+.skill-tag:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .freelancer-dashboard {
+        padding: 1rem 0;
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .freelancer-dashboard .container-fluid {
+        padding: 0 1rem;
+    }
+    
+    .card-header {
+        padding: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Stats Cards */
+.stats-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    height: 100%;
+    border-left: 4px solid var(--primary);
+    margin-bottom: 1.5rem;
+    background: white;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.stats-card .card-body {
+    padding: 1.5rem;
+}
+
+.stats-card .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0.5rem 0;
+}
+
+.stats-card .stat-label {
+    font-size: 0.875rem;
+    color: var(--secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.stats-card .stat-icon {
+    font-size: 2rem;
+    opacity: 0.2;
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Cards - Specific card types */
+.project-card, .job-card, .skill-item {
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--primary);
+    background: white;
+    height: 100%;
+}
+
+.project-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.project-card .card-header, .job-card .card-header {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px 12px 0 0;
+}
+
+.project-card .card-body {
+    padding: 1.5rem;
+}
+
+.project-card .project-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--dark);
+}
+
+.project-card .project-client {
+    color: var(--secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.project-card .project-client i {
+    margin-right: 0.5rem;
+    color: var(--primary);
+}
+
+.project-card .project-due {
+    color: var(--secondary);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+}
+
+.project-card .project-due i {
+    margin-right: 0.5rem;
+    color: var(--warning);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 600;
+    border-radius: 50rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.bg-in-progress {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--info);
+}
+
+.bg-client-review {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+}
+
+/* Recommended Jobs */
+.job-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--success);
+}
+
+.job-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.job-card .job-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 0.25rem;
+}
+
+.job-card .job-price {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.job-card .job-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--secondary);
+    margin-top: 0.5rem;
+}
+
+.job-card .job-meta i {
+    margin-right: 0.25rem;
+    color: var(--primary);
+}
+
+/* Skills Section - Ultra Compact Layout */
+.skill-item {
+    background: white;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.15s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.skill-item:last-child {
+    margin-bottom: 0;
+}
+
+.skill-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.skill-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.skill-title-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.skill-item .skill-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.skill-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.skill-badge {
+    font-size: 0.625rem;
+    font-weight: 500;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    background-color: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+    margin-left: 0.5rem;
+}
+
+.skill-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.15rem;
+}
+
+.skill-progress-wrapper {
+    flex: 1;
+    min-width: 0;
+    margin-right: 0.5rem;
+}
+
+.skill-item .progress {
+    height: 4px;
+    border-radius: 2px;
+    background-color: #f1f5f9;
+    margin: 0.15rem 0 0;
+    overflow: hidden;
+}
+
+.skill-item .progress-bar {
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: width 0.6s ease;
+    width: 0;
+    height: 100%;
+}
+
+.skill-item .progress-bar::after {
+    content: '';
+    position: absolute;
+    right: -2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: inherit;
+    border: 1px solid white;
+}
+
+.skill-level {
+    font-size: 0.6875rem;
+    color: #94a3b8;
+    font-weight: 500;
+    white-space: nowrap;
+    margin-left: 0.5rem;
+}
+
+.skill-percentage {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #475569;
+    margin-left: 0.5rem;
+    min-width: 2rem;
+    text-align: right;
+}
+
+/* Skill level indicators */
+.skill-beginner .progress-bar { background-color: #10b981; }
+.skill-beginner .skill-icon { background-color: #d1fae5; color: #059669; }
+.skill-intermediate .progress-bar { background-color: #3b82f6; }
+.skill-intermediate .skill-icon { background-color: #dbeafe; color: #2563eb; }
+.skill-advanced .progress-bar { background-color: #8b5cf6; }
+.skill-advanced .skill-icon { background-color: #ede9fe; color: #7c3aed; }
+.skill-expert .progress-bar { background-color: #ec4899; }
+.skill-expert .skill-icon { background-color: #fce7f3; color: #db2777; }
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .stats-card .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .stats-card .stat-icon {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .job-meta {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .job-meta > span {
+        flex: 1 0 45%;
+    }
+}
+
+/* Animation for cards */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Apply animation to cards */
+.stats-card,
+.project-card,
+.job-card,
+.skill-item {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+}
+
+/* Add delay to each card */
+.stats-card:nth-child(1) { animation-delay: 0.1s; }
+.stats-card:nth-child(2) { animation-delay: 0.2s; }
+.stats-card:nth-child(3) { animation-delay: 0.3s; }
+.stats-card:nth-child(4) { animation-delay: 0.4s; }
+.project-card:nth-child(1) { animation-delay: 0.2s; }
+.project-card:nth-child(2) { animation-delay: 0.3s; }
+.job-card:nth-child(1) { animation-delay: 0.3s; }
+.job-card:nth-child(2) { animation-delay: 0.4s; }

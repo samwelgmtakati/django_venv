@@ -1,0 +1,113 @@
+{% extends "dashboard/base.html" %}
+{% block flash_messages %}{% endblock %}
+{% load static %}
+
+{% block title %}{% block message_title %}{% endblock %} - Messages{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <a href="{% url 'messages:inbox' %}" class="btn btn-sm btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Inbox
+                            </a>
+                            {% block message_heading %}Messages{% endblock %}
+                        </h4>
+                        <div>
+                            <a href="{% url 'messages:new_thread' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i> New Message
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% block message_content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .message-item {
+        border-left: 3px solid transparent;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    
+    .message-item.unread {
+        background-color: #f8f9fa;
+        border-left-color: #0d6efd;
+    }
+    
+    .message-item:hover {
+        background-color: #f1f3f5;
+    }
+    
+    .message-item .message-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+    
+    .message-item .message-sender {
+        font-weight: 600;
+    }
+    
+    .message-item .message-time {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    
+    .message-item .message-body {
+        color: #212529;
+    }
+    
+    .message-actions {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .message-actions .btn-sm {
+        padding: 0.125rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    /* Ensure text inside message rows is readable */
+    .message-item td,
+    .message-item a {
+        color: #212529 !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Auto-hide alerts after 5 seconds
+    var alertList = document.querySelectorAll('.alert');
+    alertList.forEach(function (alert) {
+        var alertInstance = new bootstrap.Alert(alert);
+        setTimeout(function() {
+            alertInstance.close();
+        }, 5000);
+    });
+});
+</script>
+{% endblock %}

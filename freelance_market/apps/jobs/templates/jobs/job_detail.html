@@ -1,0 +1,526 @@
+{% extends 'jobs/base.html' %}
+{% load humanize %}
+
+{% block page_title %}{{ job.title }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{% url 'jobs:job_list' %}">My Jobs</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ job.title|truncatechars:30 }}</li>
+{% endblock %}
+
+{% block header_actions %}
+    <div class="btn-group" role="group">
+        <a href="{% url 'jobs:job_list' %}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left me-1"></i> Back to Jobs
+        </a>
+        {% if job.status == 'draft' or job.status == 'closed' %}
+            <form method="post" action="{% url 'jobs:update_job_status' job.slug %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="published">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-send-check me-1"></i> Publish Now
+                </button>
+            </form>
+        {% elif job.status == 'published' %}
+            <form method="post" action="{% url 'jobs:update_job_status' job.slug %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="closed">
+                <button type="submit" class="btn btn-outline-warning me-2">
+                    <i class="bi bi-pause-circle me-1"></i> Close Job
+                </button>
+            </form>
+        {% endif %}
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-gear me-1"></i> Actions
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="{% url 'jobs:job_update' job.slug %}">
+                        <i class="bi bi-pencil me-2"></i>Edit Job
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'jobs:proposal_list' job.slug %}">
+                        <i class="bi bi-envelope-paper me-2"></i>View Proposals ({{ job.proposals.count }})
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                {% if job.status == 'published' %}
+                    <li>
+                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#shareJobModal">
+                            <i class="bi bi-share me-2"></i>Share Job
+                        </a>
+                    </li>
+                {% endif %}
+                <li>
+                    <a class="dropdown-item text-danger" href="{% url 'jobs:job_delete' job.slug %}">
+                        <i class="bi bi-trash me-2"></i>Delete Job
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+{% endblock %}
+
+{% block job_content %}
+<div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+        <!-- Job Header -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div class="d-flex align-items-center mb-2">
+                            <h1 class="h4 mb-0">{{ job.title }}</h1>
+                            <span class="badge ms-2 {% if job.status == 'open' %}bg-success{% elif job.status == 'closed' %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ job.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            {% if job.category %}
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-tag me-1"></i> {{ job.category.name }}
+                                </span>
+                            {% endif %}
+                            <span class="badge bg-light text-dark">
+                                <i class="bi bi-briefcase me-1"></i> {{ job.get_job_type_display }}
+                            </span>
+                            {% if job.budget %}
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-currency-exchange me-1"></i> TZS {{ job.budget|intcomma }}
+                                </span>
+                            {% endif %}
+                            <span class="badge bg-light text-dark">
+                                <i class="bi bi-clock me-1"></i> Posted {{ job.created_at|timesince }} ago
+                            </span>
+                        </div>
+                    </div>
+                    {% if job.attachment %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-paperclip me-1"></i> Attachments
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="{{ job.attachment.url }}" target="_blank">
+                                        <i class="bi bi-download me-2"></i> Download Attachment
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Job Tabs -->
+                <ul class="nav nav-tabs mb-4" id="jobTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="description-tab" data-bs-toggle="tab" 
+                                data-bs-target="#description" type="button" role="tab" aria-controls="description" 
+                                aria-selected="true">
+                            Description
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="requirements-tab" data-bs-toggle="tab" 
+                                data-bs-target="#requirements" type="button" role="tab" aria-controls="requirements" 
+                                aria-selected="false">
+                            Requirements
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="proposals-tab" data-bs-toggle="tab" 
+                                data-bs-target="#proposals" type="button" role="tab" aria-controls="proposals" 
+                                aria-selected="false">
+                            Proposals <span class="badge bg-primary rounded-pill ms-1">{{ job.proposals.count }}</span>
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Tab Content -->
+                <div class="tab-content" id="jobTabsContent">
+                    <!-- Description Tab -->
+                    <div class="tab-pane fade show active" id="description" role="tabpanel" 
+                         aria-labelledby="description-tab">
+                        <div class="prose">
+                            {{ job.description|safe }}
+                        </div>
+                    </div>
+                    
+                    <!-- Requirements Tab -->
+                    <div class="tab-pane fade" id="requirements" role="tabpanel" 
+                         aria-labelledby="requirements-tab">
+                        <div class="prose">
+                            {{ job.requirements|safe }}
+                        </div>
+                    </div>
+                    
+                    <!-- Proposals Tab -->
+                    <div class="tab-pane fade" id="proposals" role="tabpanel" 
+                         aria-labelledby="proposals-tab">
+                        {% if job.proposals.exists %}
+                            <div class="list-group list-group-flush">
+                                {% for proposal in job.proposals.all|slice:":5" %}
+                                    <div class="list-group-item px-0">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-3">
+                                                    {% if proposal.freelancer.profile_photo %}
+                                                        <img src="{{ proposal.freelancer.profile_photo.url }}" 
+                                                             class="rounded-circle" width="50" height="50" 
+                                                             alt="{{ proposal.freelancer.get_full_name }}">
+                                                    {% else %}
+                                                        <div class="avatar-text bg-light rounded-circle d-flex align-items-center justify-content-center" 
+                                                             style="width: 50px; height: 50px;">
+                                                            {{ proposal.freelancer.get_initials }}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1">
+                                                        <a href="#" class="text-dark">
+                                                            {{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}
+                                                        </a>
+                                                        <span class="badge ms-2 {% if proposal.status == 'accepted' %}bg-success{% elif proposal.status == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}">
+                                                            {{ proposal.get_status_display }}
+                                                        </span>
+                                                    </h6>
+                                                    <p class="mb-1 small text-muted">
+                                                        Submitted {{ proposal.submitted_at|timesince }} ago
+                                                    </p>
+                                                    <p class="mb-0">
+                                                        <span class="text-dark fw-medium">TZS {{ proposal.bid_amount|floatformat:0 }}</span> 
+                                                        • {{ proposal.get_delivery_time_display }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-light rounded-circle" type="button" 
+                                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'jobs:proposal_detail' job.slug proposal.id %}?from_job=1">
+                                                            <i class="bi bi-eye me-2"></i>View Details
+                                                        </a>
+                                                    </li>
+                                                    {% if proposal.status == 'pending' %}
+                                                        <li>
+                                                            <a class="dropdown-item text-success" href="#"
+                                                               onclick="document.getElementById('accept-proposal-{{ proposal.id }}').submit();">
+                                                                <i class="bi bi-check-circle me-2"></i>Accept
+                                                            </a>
+                                                            <form id="accept-proposal-{{ proposal.id }}" 
+                                                                  method="post" action="{% url 'jobs:accept_proposal' job_slug=job.slug pk=proposal.id %}" 
+                                                                  style="display: none;">
+                                                                {% csrf_token %}
+                                                            </form>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item text-danger" href="#"
+                                                               onclick="if(confirm('Are you sure you want to reject this proposal?')) { document.getElementById('reject-proposal-{{ proposal.id }}').submit(); }">
+                                                                <i class="bi bi-x-circle me-2"></i>Reject
+                                                            </a>
+                                                            <form id="reject-proposal-{{ proposal.id }}" 
+                                                                  method="post" action="{% url 'jobs:reject_proposal' job_slug=job.slug pk=proposal.id %}" 
+                                                                  style="display: none;">
+                                                                {% csrf_token %}
+                                                            </form>
+                                                        </li>
+                                                    {% endif %}
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#">
+                                                            <i class="bi bi-chat-left-text me-2"></i>Message
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-3 text-center">
+                                <a href="{% url 'jobs:proposal_list' job.slug %}" class="btn btn-outline-primary">
+                                    View All Proposals ({{ job.proposals.count }})
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-envelope-x text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3">No proposals yet</h5>
+                                <p class="text-muted">You haven't received any proposals for this job yet.</p>
+                                {% if job.status == 'published' %}
+                                    <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#shareJobModal">
+                                        <i class="bi bi-share me-1"></i> Share Job
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Similar Jobs -->
+        {% if similar_jobs %}
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Similar Jobs</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for similar_job in similar_jobs %}
+                            <a href="{% url 'jobs:job_detail' similar_job.id %}" class="list-group-item list-group-item-action border-0 px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-1">{{ similar_job.title }}</h6>
+                                    <span class="badge bg-light text-dark">
+                                        TZS {{ similar_job.budget|default:"-"|floatformat:0|intcomma }}
+                                    </span>
+                                </div>
+                                <div class="d-flex small text-muted">
+                                    <span class="me-3">{{ similar_job.get_job_type_display }}</span>
+                                    <span>Posted {{ similar_job.created_at|timesince }} ago</span>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Job Overview -->
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Job Overview</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-calendar3 me-2 text-muted"></i> Posted</span>
+                        <span>{{ job.created_at|date:"M d, Y" }}</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-people me-2 text-muted"></i> Proposals</span>
+                        <span>{{ job.proposals.count }}</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-cash-coin me-2 text-muted"></i> Budget</span>
+                        <span>{% if job.budget %}TZS {{ job.budget|floatformat:0|intcomma }}{% else %}Negotiable{% endif %}</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-clock me-2 text-muted"></i> Job Type</span>
+                        <span>{{ job.get_job_type_display }}</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-tag me-2 text-muted"></i> Category</span>
+                        <span>{{ job.category.name|default:"-" }}</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-geo-alt me-2 text-muted"></i> Location</span>
+                        <span>{{ job.location|default:"Remote" }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Skills Required -->
+        {% if job.skills.exists %}
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Skills Required</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for skill in job.skills.all %}
+                            <span class="badge bg-light text-dark">{{ skill.name }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Share Job -->
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Share This Job</h5>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted">Share this job with potential candidates or on social media.</p>
+                <div class="d-flex gap-2">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" 
+                       target="_blank" class="btn btn-sm btn-outline-primary flex-grow-1">
+                        <i class="bi bi-facebook me-1"></i> Facebook
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri|urlencode }}&text={{ job.title|urlencode }}" 
+                       target="_blank" class="btn btn-sm btn-outline-info flex-grow-1">
+                        <i class="bi bi-twitter me-1"></i> Twitter
+                    </a>
+                </div>
+                <div class="input-group mt-3">
+                    <input type="text" class="form-control form-control-sm" id="jobLink" 
+                           value="{{ request.build_absolute_uri }}" readonly>
+                    <button class="btn btn-outline-secondary btn-sm" type="button" id="copyLinkBtn" 
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Job Modal -->
+<div class="modal fade" id="shareJobModal" tabindex="-1" aria-labelledby="shareJobModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareJobModalLabel">Share Job</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Share this job with potential candidates or on social media.</p>
+                
+                <div class="d-flex gap-2 mb-4">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" 
+                       target="_blank" class="btn btn-outline-primary flex-grow-1 text-center p-3">
+                        <i class="bi bi-facebook fs-3 d-block mb-1"></i>
+                        <span>Facebook</span>
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri|urlencode }}&text={{ job.title|urlencode }}" 
+                       target="_blank" class="btn btn-outline-info flex-grow-1 text-center p-3">
+                        <i class="bi bi-twitter fs-3 d-block mb-1"></i>
+                        <span>Twitter</span>
+                    </a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}" 
+                       target="_blank" class="btn btn-outline-primary flex-grow-1 text-center p-3">
+                        <i class="bi bi-linkedin fs-3 d-block mb-1"></i>
+                        <span>LinkedIn</span>
+                    </a>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="shareLink" class="form-label">Or copy link</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="shareLink" 
+                               value="{{ request.build_absolute_uri }}" readonly>
+                        <button class="btn btn-outline-secondary" type="button" id="copyShareLinkBtn">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="shareEmail" class="form-label">Or share via email</label>
+                    <div class="input-group">
+                        <input type="email" class="form-control" id="shareEmail" placeholder="Email address">
+                        <button class="btn btn-primary" type="button" id="sendEmailBtn">
+                            <i class="bi bi-send"></i> Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize tooltips
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+});
+
+// Copy to clipboard functionality
+document.getElementById('copyLinkBtn').addEventListener('click', function() {
+    var copyText = document.getElementById("jobLink");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    
+    // Update tooltip text
+    var tooltip = bootstrap.Tooltip.getInstance(this);
+    var originalTitle = this.getAttribute('data-bs-original-title');
+    this.setAttribute('data-bs-original-title', 'Copied!');
+    tooltip.show();
+    
+    // Reset tooltip after 2 seconds
+    setTimeout(function() {
+        tooltip.hide();
+        copyLinkBtn.setAttribute('data-bs-original-title', originalTitle);
+    }, 2000);
+});
+
+document.getElementById('copyShareLinkBtn').addEventListener('click', function() {
+    var copyText = document.getElementById("shareLink");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    
+    // Change button text temporarily
+    var originalText = this.innerHTML;
+    this.innerHTML = '<i class="bi bi-check"></i> Copied!';
+    
+    // Reset button after 2 seconds
+    setTimeout(function() {
+        copyShareLinkBtn.innerHTML = originalText;
+    }, 2000);
+});
+
+// Handle email sharing
+document.getElementById('sendEmailBtn').addEventListener('click', function() {
+    var email = document.getElementById('shareEmail').value;
+    if (email) {
+        // In a real application, you would send this to your backend
+        alert('Email sent to ' + email);
+        document.getElementById('shareEmail').value = '';
+        
+        // Close the modal
+        var modal = bootstrap.Modal.getInstance(document.getElementById('shareJobModal'));
+        modal.hide();
+    } else {
+        alert('Please enter an email address');
+    }
+});
+
+// Initialize tab functionality
+var tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
+tabEls.forEach(function(tabEl) {
+    tabEl.addEventListener('click', function (event) {
+        event.preventDefault();
+        var tab = new bootstrap.Tab(tabEl);
+        tab.show();
+    });
+});
+
+// Handle form submissions
+var acceptProposalForms = document.querySelectorAll('form[id^="accept-proposal-"]');
+acceptProposalForms.forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+        if (!confirm('Are you sure you want to accept this proposal?')) {
+            e.preventDefault();
+        }
+    });
+});
+
+var rejectProposalForms = document.querySelectorAll('form[id^="reject-proposal-"]');
+rejectProposalForms.forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+        if (!confirm('Are you sure you want to reject this proposal?')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

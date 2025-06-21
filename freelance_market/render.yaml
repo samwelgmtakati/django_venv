@@ -1,0 +1,47 @@
+# Render Blueprint for Freelance Market
+# Reference: https://render.com/docs/blueprint-spec
+
+# PostgreSQL database
+services:
+  - type: web
+    name: freelance-market
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn freelance_market.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: DJANGO_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
+      - key: ALLOWED_HOSTS
+        value: your-render-app-url.onrender.com
+      - key: DEBUG
+        value: false
+      - key: DISABLE_COLLECTSTATIC
+        value: 1
+    database:
+      name: freelance_market_db
+      databaseName: freelance_market
+      user: freelance_market_user
+    plan: free
+    autoDeploy: true
+
+  # PostgreSQL database
+  - type: postgres
+    name: freelance-market-db
+    plan: free
+    databaseName: freelance_market
+    user: freelance_market_user
+    ipAllowList: []
+    # Uncomment the following line to enable external connections
+    # allowAllExternalConnections: true
+
+# Create a Redis instance if needed (uncomment if your app uses Redis)
+#  - type: redis
+#    name: freelance-market-redis
+#    plan: free
+#    ipAllowList: []

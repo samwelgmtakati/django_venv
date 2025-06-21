@@ -1,0 +1,21 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Test Template Inheritance - Freelance Market{% endblock title %}
+
+{% block content %}
+{{ block.super }}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h1 class="h3 mb-4">Template Inheritance Test</h1>
+            <div class="alert alert-success">
+                <h4 class="alert-heading">Success!</h4>
+                <p>This template is correctly extending the dashboard's base template.</p>
+                <p>If you can see the dashboard layout around this message, template inheritance is working correctly.</p>
+                <p>Test message: {{ test_message }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

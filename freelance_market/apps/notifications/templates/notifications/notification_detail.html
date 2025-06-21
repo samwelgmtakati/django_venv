@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ notification.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'notifications:list' %}">Notifications</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Details</li>
+                </ol>
+            </nav>
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">{{ notification.title }}</h2>
+                    <span class="badge bg-{{ notification.get_badge_type }}">
+                        {{ notification.get_notification_type_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <span class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                {{ notification.created_at|date:"F j, Y, g:i a" }}
+                            </span>
+                            {% if not notification.is_read %}
+                                <span class="badge bg-primary ms-2">New</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <form method="post" action="{% url 'notifications:mark_read' notification.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-check2"></i> Mark as Read
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-content mb-4">
+                        <p class="lead">{{ notification.message }}</p>
+                    </div>
+                    
+                    {% if notification.url %}
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ notification.url }}" class="btn btn-primary">
+                                <i class="bi bi-arrow-right-circle me-1"></i> View Details
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            ID: {{ notification.id }}
+                        </small>
+                        <small class="text-muted">
+                            {% if notification.is_read %}
+                                Read on {{ notification.read_at|date:"M j, Y g:i a" }}
+                            {% else %}
+                                Unread
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 d-flex justify-content-between">
+                <a href="{% url 'notifications:list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Notifications
+                </a>
+                <div>
+                    <a href="#" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="bi bi-trash me-1"></i> Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this notification? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'notifications:delete' notification.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

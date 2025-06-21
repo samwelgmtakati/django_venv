@@ -1,0 +1,157 @@
+{% extends 'freelancer/base.html' %}
+
+{% block page_title %}My Freelancer Profile{% endblock %}
+
+{% block page_actions %}
+    <a href="{% url 'freelancer:edit_profile' %}" class="btn btn-primary me-2">
+        <i class="bi bi-pencil-square me-1"></i> Edit Profile
+    </a>
+    <div class="form-check form-switch d-inline-flex align-items-center">
+        <input class="form-check-input me-2" type="checkbox" id="availabilityToggle" 
+               {% if freelancer.is_available %}checked{% endif %} 
+               onchange="toggleAvailability()">
+        <label class="form-check-label" for="availabilityToggle">
+            <span class="badge bg-{% if freelancer.is_available %}success{% else %}secondary{% endif %}">
+                {% if freelancer.is_available %}Available{% else %}Not Available{% endif %}
+            </span>
+        </label>
+    </div>
+{% endblock %}
+
+{% block main_content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <img src="{{ freelancer.user.profile_picture.url|default:'/static/images/default-avatar.png' }}" 
+                     alt="{{ freelancer.user.get_full_name|default:freelancer.user.username }}" 
+                     class="profile-avatar img-thumbnail mb-3">
+                <h4 class="mb-1">{{ freelancer.user.get_full_name|default:freelancer.user.username }}</h4>
+                <p class="text-muted mb-3">{{ freelancer.title|default:"Freelancer" }}</p>
+                
+                <div class="d-grid gap-2">
+                    <a href="{% url 'freelancer:edit_profile' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil-square me-1"></i> Edit Profile
+                    </a>
+                </div>
+                
+                <hr>
+                
+                <div class="text-start">
+                    {% if freelancer.hourly_rate %}
+                    <p class="mb-2">
+                        <i class="bi bi-currency-exchange me-2"></i>
+                        <strong>Rate:</strong> TZS {{ freelancer.hourly_rate|floatformat:0 }}/hour
+                    </p>
+                    {% endif %}
+                    
+                    {% if freelancer.experience_years %}
+                    <p class="mb-2">
+                        <i class="bi bi-award me-2"></i>
+                        <strong>Experience:</strong> {{ freelancer.experience_years }} year{{ freelancer.experience_years|pluralize }}
+                    </p>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">Skills</h6>
+                            <a href="{% url 'freelancer:skills' %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i> Manage
+                            </a>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for skill in freelancer.skills.all|slice:":5" %}
+                                <span class="badge bg-primary">{{ skill.name }}</span>
+                            {% empty %}
+                                <p class="text-muted mb-0">No skills added yet.</p>
+                            {% endfor %}
+                            {% if freelancer.skills.count > 5 %}
+                                <span class="badge bg-secondary">+{{ freelancer.skills.count|add:"-5" }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if freelancer.education %}
+                    <p class="mb-2">
+                        <i class="bi bi-mortarboard me-2"></i>
+                        <strong>Experience:</strong> {{ freelancer.experience_years }} year{{ freelancer.experience_years|pluralize }}
+                    </p>
+                    {% endif %}
+                    
+                    {% if freelancer.portfolio_website %}
+                    <p class="mb-0">
+                        <i class="bi bi-globe me-2"></i>
+                        <strong>Portfolio:</strong> 
+                        <a href="{{ freelancer.portfolio_website }}" target="_blank" class="text-decoration-none">
+                            View Portfolio
+                        </a>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Skills</h5>
+            </div>
+            <div class="card-body">
+                {% if freelancer.skills.all %}
+                    {% for skill in freelancer.skills.all %}
+                        <span class="badge bg-primary mb-2 me-1">{{ skill.name }}</span>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">No skills added yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">About Me</h5>
+            </div>
+            <div class="card-body">
+                {% if freelancer.bio %}
+                    {{ freelancer.bio|linebreaks }}
+                {% else %}
+                    <p class="text-muted">No bio provided. <a href="{% url 'freelancer:edit_profile' %}">Add a bio</a> to tell clients about yourself.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if freelancer.education %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Education</h5>
+            </div>
+            <div class="card-body">
+                {{ freelancer.education|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Account Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Username</dt>
+                    <dd class="col-sm-8">{{ freelancer.user.username }}</dd>
+                    
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">{{ freelancer.user.email }}</dd>
+                    
+                    <dt class="col-sm-4">Member Since</dt>
+                    <dd class="col-sm-8">{{ freelancer.user.date_joined|date:"F j, Y" }}</dd>
+                    
+                    <dt class="col-sm-4">Last Login</dt>
+                    <dd class="col-sm-8">{{ freelancer.user.last_login|timesince }} ago</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
