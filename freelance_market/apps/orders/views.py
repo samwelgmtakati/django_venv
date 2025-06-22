@@ -1,4 +1,6 @@
 import os
+from django.db import models
+from django.db.models import Q
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -48,269 +50,147 @@ def approve_order(request, pk):
 
 
 class OrderListView(LoginRequiredMixin, ListView):
+    """
+    View for listing all orders for the current user with filtering and pagination.
+    """
+    model = Order
+    template_name = "orders/order_list.html"
+    context_object_name = "orders"
+    paginate_by = 10
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        """
+        Get the list of orders for the current user with optional status filtering.
+        """
+        user = self.request.user
+        queryset = Order.objects.filter(
+            Q(client=user) | Q(freelancer=user)
+        ).distinct()
+        
+        # Filter by status if provided
+        status = self.request.GET.get('status')
+        if status == 'active':
+            queryset = queryset.exclude(
+                status__in=[Order.STATUS_APPROVED, Order.STATUS_CANCELLED, Order.STATUS_COMPLETED]
+            )
+        elif status == 'completed':
+            queryset = queryset.filter(status=Order.STATUS_APPROVED) | \
+                      queryset.filter(status=Order.STATUS_COMPLETED)
+        elif status == 'cancelled':
+            queryset = queryset.filter(status=Order.STATUS_CANCELLED)
+        
+        return queryset.select_related('job', 'client', 'freelancer')
+    
+    def get_context_data(self, **kwargs):
+        """
+        Add additional context data for the template.
+        """
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        
+        # Get base queryset for the current user
+        base_queryset = Order.objects.filter(
+            Q(client=user) | Q(freelancer=user)
+        ).distinct()
+        
+        # Add statistics to context
+        context.update({
+            'active_page': 'orders',
+            'active_orders_count': base_queryset.filter(
+                status__in=[
+                    Order.STATUS_IN_PROGRESS,
+                    Order.STATUS_DELIVERED,
+                    Order.STATUS_REVISION_REQUESTED
+                ]
+            ).count(),
+            'completed_orders_count': base_queryset.filter(
+                status=Order.STATUS_APPROVED
+            ).count(),
+            'total_spent': base_queryset.filter(
+                client=user,
+                status=Order.STATUS_APPROVED
+            ).aggregate(total=models.Sum('amount')).get('total__sum') or 0,
+        })
+        
+        return context
+
+
+class OrderDetailView(LoginRequiredMixin, DetailView):
+    """
+    View for displaying details of a specific order.
+    """
+    model = Order
     template_name = "orders/order_detail.html"
     context_object_name = "order"
-    paginate_by = 1  # Show one order per page
+    
+    def get_queryset(self):
+        """
+        Only allow the client or freelancer to view the order.
+        """
+        user = self.request.user
+        return Order.objects.filter(
+            Q(client=user) | Q(freelancer=user)
+        ).select_related('job', 'client', 'freelancer')
 
     def get_context_data(self, **kwargs):
+        """
+        Add additional context data for the template.
+        """
         context = super().get_context_data(**kwargs)
-        order = self.object if hasattr(self, 'object') else None
-        
-        # Get the filtered queryset we stored in get_queryset
-        queryset = getattr(self, 'filtered_queryset', Order.objects.none())
-        
-        # If no order is found, set up empty context
-        if not order:
-            context.update({
-                'order': None,
-                'active_page': 'orders',
-                'can_deliver': False,
-                'can_approve': False,
-                'can_request_revision': False,
-                'can_review': False,
-                'has_reviewed': False,
-                'reviews': [],
-                'deliveries': [],
-                'pagination': {
-                    'has_previous': False,
-                    'has_next': False,
-                    'previous_order_id': None,
-                    'next_order_id': None,
-                    'current_index': 0,
-                    'total_orders': 0
-                },
-                'STATUS_APPROVED': Order.STATUS_APPROVED,
-                'STATUS_CANCELLED': Order.STATUS_CANCELLED,
-                'STATUS_DELIVERED': Order.STATUS_DELIVERED,
-                'STATUS_IN_PROGRESS': Order.STATUS_IN_PROGRESS,
-                'STATUS_REVISION_REQUESTED': Order.STATUS_REVISION_REQUESTED,
-            })
-            return context
-            
-        # Get all orders for pagination
+        order = self.object
         user = self.request.user
-        client_orders = Order.objects.filter(client=user)
-        freelancer_orders = Order.objects.filter(freelancer=user)
-        all_orders = (client_orders | freelancer_orders).distinct().order_by('-created_at')
         
-        # Get current order index and total count
-        order_list = list(all_orders.values_list('id', flat=True))
-        current_index = order_list.index(order.id) if order.id in order_list else 0
-        total_orders = len(order_list)
-        
-        # Get previous and next order IDs
-        prev_order_id = order_list[current_index - 1] if current_index > 0 else None
-        next_order_id = order_list[current_index + 1] if current_index < total_orders - 1 else None
-        
-        # Add pagination context
-        pagination = {
-            'has_previous': current_index > 0,
-            'has_next': current_index < total_orders - 1,
-            'previous_order_id': prev_order_id,
-            'next_order_id': next_order_id,
-            'current_index': current_index + 1,
-            'total_orders': total_orders,
-        }
-        
-        # Get reviews and deliveries
+        # Get reviews
         from apps.reviews.models import Review
-        reviews = Review.objects.filter(order=order).select_related('reviewer').order_by('-created_at')
-        has_reviewed = reviews.filter(reviewer=self.request.user).exists()
+        reviews = Review.objects.filter(order=order).select_related('reviewer')
+        has_reviewed = reviews.filter(reviewer=user).exists()
         
         # Check permissions
         can_deliver = (
-            order.freelancer == self.request.user and 
+            order.freelancer == user and 
             order.status in [Order.STATUS_IN_PROGRESS, Order.STATUS_REVISION_REQUESTED]
         )
         
         can_approve = (
-            order.client == self.request.user and 
+            order.client == user and 
             order.status == Order.STATUS_DELIVERED
         )
         
         can_request_revision = (
-            order.client == self.request.user and 
+            order.client == user and 
             order.status == Order.STATUS_DELIVERED
         )
         
         can_review = (
-            order.status == Order.STATUS_APPROVED and 
-            not has_reviewed
+            order.status in [Order.STATUS_APPROVED, Order.STATUS_COMPLETED] and 
+            not has_reviewed and
+            user in [order.client, order.freelancer]
         )
         
-        # Update context
+        # Add to context
         context.update({
-            'active_page': 'orders',
-            'order': order,
             'can_deliver': can_deliver,
             'can_approve': can_approve,
             'can_request_revision': can_request_revision,
             'can_review': can_review,
             'has_reviewed': has_reviewed,
             'reviews': reviews,
-            'deliveries': order.deliveries.all().order_by('-uploaded_at'),
-            'pagination': pagination,
-            'STATUS_APPROVED': Order.STATUS_APPROVED,
-            'STATUS_CANCELLED': Order.STATUS_CANCELLED,
-            'STATUS_DELIVERED': Order.STATUS_DELIVERED,
-            'STATUS_IN_PROGRESS': Order.STATUS_IN_PROGRESS,
-            'STATUS_REVISION_REQUESTED': Order.STATUS_REVISION_REQUESTED,
-        })
-        return context
-
-    def get_queryset(self):
-        user = self.request.user
-        print(f"Getting orders for user: {user}")  # Debug print
-        
-        # First get all orders where user is either client or freelancer
-        client_orders = Order.objects.filter(client=user)
-        freelancer_orders = Order.objects.filter(freelancer=user)
-        queryset = (client_orders | freelancer_orders).distinct()
-        
-        print(f"Found {queryset.count()} total orders")  # Debug print
-        
-        # Filter by status if provided
-        status = self.request.GET.get('status')
-        if status == 'active':
-            queryset = queryset.exclude(status__in=[Order.STATUS_APPROVED, Order.STATUS_CANCELLED])
-        elif status == 'completed':
-            queryset = queryset.filter(status=Order.STATUS_APPROVED)
-        elif status == 'cancelled':
-            queryset = queryset.filter(status=Order.STATUS_CANCELLED)
-        
-        # Order by creation date, newest first
-        queryset = queryset.order_by('-created_at')
-        
-        # Store the filtered queryset for later use
-        self.filtered_queryset = queryset
-        
-        print(f"After filtering: {queryset.count()} orders")  # Debug print
-        
-        # Handle order_id parameter for direct navigation
-        order_id = self.request.GET.get('order_id')
-        if order_id:
-            try:
-                # Try to get the specific order if ID is provided
-                order = queryset.get(id=order_id)
-                return order
-            except (Order.DoesNotExist, ValueError):
-                pass
-        
-        # If no orders exist, return an empty queryset
-        if not queryset.exists():
-            return queryset.none()
-                
-        # Get the page number from the request
-        page = self.request.GET.get('page', 1)
-        paginator = Paginator(queryset, self.paginate_by)
-        
-        try:
-            page_obj = paginator.page(page)
-            if page_obj.object_list.exists():
-                return page_obj.object_list[0]
-        except (PageNotAnInteger, EmptyPage):
-            page_obj = paginator.page(1)
-            if page_obj.object_list.exists():
-                return page_obj.object_list[0]
-        
-        # Return first order if pagination fails
-        return queryset.first()
-    
-    def get(self, request, *args, **kwargs):
-        try:
-            print("OrderListView: GET request received")  # Debug print
-            response = super().get(request, *args, **kwargs)
-            print(f"Rendering template: {self.template_name}")  # Debug print
-            print(f"Context data: {self.get_context_data()}")  # Debug print
-            return response
-        except Exception as e:
-            print(f"Error in OrderListView: {str(e)}")  # Debug print
-            raise
-
-
-class OrderDetailView(LoginRequiredMixin, DetailView):
-    model = Order
-    template_name = "orders/order_detail.html"
-    context_object_name = "order"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        order = self.object
-        user = self.request.user
-        
-        # Attach request to order for can_be_reviewed property
-        order._request = self.request
-        
-        # Add delivery history
-        context['deliveries'] = order.deliveries.all().order_by('-uploaded_at')
-        
-        # Get all reviews for this order
-        from apps.reviews.models import Review
-        reviews = Review.objects.filter(order=order).select_related('reviewer').order_by('-created_at')
-        
-        # Check if current user has already reviewed
-        has_reviewed = reviews.filter(reviewer=user).exists()
-        
-        # Add review section context
-        show_review_section = order.status in [Order.STATUS_APPROVED, Order.STATUS_COMPLETED]
-        can_leave_review = (
-            order.status in [Order.STATUS_APPROVED, Order.STATUS_COMPLETED] and 
-            not has_reviewed and
-            user in [order.client, order.freelancer]
-        )
-        
-        context.update({
-            'debug_info': {
-                'template_name': self.template_name,
-                'order_status': order.status,
-                'order_status_display': order.get_status_display(),
-                'user_roles': {
-                    'is_client': user == order.client,
-                    'is_freelancer': user == order.freelancer,
-                }
-            },
-            'reviews': reviews,
-            'has_reviewed': has_reviewed,
-            'can_review': can_leave_review,
-            'show_review_section': show_review_section,
-            'review_exists': reviews.exists(),
-        })
-        
-        # Add permissions
-        context.update({
-            'can_start': (
-                user == order.client and 
-                order.status == Order.STATUS_INITIATED
-            ),
-            'can_deliver': (
-                user == order.freelancer and 
-                order.status in [Order.STATUS_IN_PROGRESS, Order.STATUS_REVISION_REQUESTED]
-            ),
-            'can_approve': (
-                user == order.client and 
-                order.status == Order.STATUS_DELIVERED
-            ),
-            'can_request_revision': (
-                user == order.client and 
-                order.status == Order.STATUS_DELIVERED and
-                order.revision_count < order.max_revisions
-            ),
-            'can_be_reviewed': order.can_be_reviewed,
+            'active_page': 'orders',
+            'can_be_reviewed': order.status in [Order.STATUS_APPROVED, Order.STATUS_COMPLETED],
             'is_client': user == order.client,
             'is_freelancer': user == order.freelancer,
+            'payment_actions': {
+                'can_pay': (
+                    order.payment_status == Order.PAYMENT_PENDING and
+                    user == order.client
+                ),
+                'can_refund': (
+                    order.payment_status == Order.PAYMENT_PAID and
+                    user == order.client
+                )
+            }
         })
-        
-        # Add payment info
-        context['payment_actions'] = {
-            'can_pay': (
-                order.payment_status == Order.PAYMENT_PENDING and
-                self.request.user == order.client
-            ),
-            'can_refund': (
-                order.payment_status == Order.PAYMENT_PAID and
-                self.request.user == order.client
-            )
-        }
         
         return context
         
@@ -323,7 +203,7 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
 
 class OrderDeliverView(LoginRequiredMixin, FormView):
     form_class = OrderDeliveryForm
-    template_name = "orders/delivery_form.html"  # This should be in apps/orders/templates/orders/
+    template_name = "orders/delivery_form.html"
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

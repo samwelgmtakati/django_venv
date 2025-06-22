@@ -1,44 +1,349 @@
 {% extends "dashboard/base.html" %}
-{% block title %}Orders{% endblock %}
+{% load humanize %}
+
+{% block title %}My Orders{% endblock %}
 
 {% block extra_css %}
 <style>
-/* Ensure badge colors are visible */
-.badge.bg-secondary { background-color: #6c757d !important; color: white !important; }
-.badge.bg-primary { background-color: #0d6efd !important; color: white !important; }
-.badge.bg-info { background-color: #0dcaf0 !important; color: #000 !important; }
-.badge.bg-success { background-color: #198754 !important; color: white !important; }
-.badge.bg-warning { background-color: #ffc107 !important; color: #000 !important; }
-.badge.bg-danger { background-color: #dc3545 !important; color: white !important; }
+/* Custom styles for orders */
+.order-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid #0d6efd;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.order-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.order-status-badge {
+    font-size: 0.8rem;
+    padding: 0.35em 0.65em;
+    border-radius: 50rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.order-amount {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.order-meta {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.order-actions .btn {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.75rem;
+}
+
+.status-active { background-color: #e3f2fd; color: #0d6efd; }
+.status-completed { background-color: #e8f5e9; color: #2e7d32; }
+.status-cancelled { background-color: #ffebee; color: #c62828; }
+.status-pending { background-color: #fff8e1; color: #ff8f00; }
+
+.stats-card {
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.stats-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+}
+
+.empty-state {
+    padding: 3rem 1rem;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #adb5bd;
+    margin-bottom: 1rem;
+}
+
+.filter-btn {
+    border-radius: 20px;
+    margin: 0 0.25rem 0.5rem 0;
+    font-size: 0.85rem;
+    padding: 0.25rem 1rem;
+    transition: all 0.2s;
+}
+
+.filter-btn.active {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Orders</h2>
-<table class="table table-hover">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Job</th>
-      <th>Status</th>
-      <th>Role</th>
-      <th>Created</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for order in orders %}
-    <tr>
-      <td>{{ order.id }}</td>
-      <td>{{ order.job.title }}</td>
-      <td><span class="badge {{ order.get_status_badge_class }}">{{ order.get_status_display }}</span></td>
-      <td>{% if user == order.client %}Client{% else %}Freelancer{% endif %}</td>
-      <td>{{ order.created_at|date:"Y-m-d" }}</td>
-      <td><a class="btn btn-sm btn-outline-primary" href="{% url 'orders:detail' order.pk %}">View</a></td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="6" class="text-center">No orders yet.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">My Orders</h1>
+            <p class="text-muted mb-0">Manage and track all your orders in one place</p>
+        </div>
+        <a href="{% url 'jobs:job_list' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>New Order
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted small mb-1">Total Orders</h6>
+                            <h4 class="mb-0">{{ page_obj.paginator.count }}</h4>
+                        </div>
+                        <div class="stats-icon text-primary">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted small mb-1">Active</h6>
+                            <h4 class="mb-0">{{ active_orders_count|default:'0' }}</h4>
+                        </div>
+                        <div class="stats-icon text-warning">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted small mb-1">Completed</h6>
+                            <h4 class="mb-0">{{ completed_orders_count|default:'0' }}</h4>
+                        </div>
+                        <div class="stats-icon text-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase text-muted small mb-1">Total Spent</h6>
+                            <h4 class="mb-0">TZS {{ total_spent|default:'0'|intcomma }}</h4>
+                        </div>
+                        <div class="stats-icon text-info">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group" aria-label="Order filters">
+                <a href="?" class="btn btn-outline-secondary filter-btn {% if not request.GET.status %}active{% endif %}">
+                    All Orders
+                </a>
+                <a href="?status=active" class="btn btn-outline-primary filter-btn {% if request.GET.status == 'active' %}active{% endif %}">
+                    Active
+                </a>
+                <a href="?status=completed" class="btn btn-outline-success filter-btn {% if request.GET.status == 'completed' %}active{% endif %}">
+                    Completed
+                </a>
+                <a href="?status=cancelled" class="btn btn-outline-danger filter-btn {% if request.GET.status == 'cancelled' %}active{% endif %}">
+                    Cancelled
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders List -->
+    {% if orders %}
+        <div class="row">
+            {% for order in orders %}
+            <div class="col-12 mb-3">
+                <div class="card order-card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <span class="order-status-badge {{ order.get_status_badge_class }}">
+                                            {{ order.get_status_display }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <h5 class="card-title mb-1">
+                                            <a href="{% url 'orders:detail' order.id %}" class="text-decoration-none">
+                                                {{ order.job.title|truncatechars:60 }}
+                                            </a>
+                                        </h5>
+                                        <p class="card-text text-muted small mb-2">
+                                            Order #{{ order.id }} • 
+                                            {% if order.client == request.user %}
+                                                Freelancer: {{ order.freelancer.get_full_name|default:order.freelancer.username }}
+                                            {% else %}
+                                                Client: {{ order.client.get_full_name|default:order.client.username }}
+                                            {% endif %}
+                                        </p>
+                                        <div class="order-meta">
+                                            <span class="me-3">
+                                                <i class="far fa-calendar-alt me-1"></i>
+                                                {{ order.created_at|date:"M d, Y" }}
+                                            </span>
+                                            {% if order.deadline %}
+                                                <span class="me-3 {% if order.is_overdue and order.status != order.STATUS_COMPLETED %}text-danger{% endif %}">
+                                                    <i class="far fa-clock me-1"></i>
+                                                    {{ order.deadline|date:"M d, Y" }}
+                                                    {% if order.is_overdue and order.status != order.STATUS_COMPLETED %}
+                                                        <span class="badge bg-danger ms-1">Overdue</span>
+                                                    {% endif %}
+                                                </span>
+                                            {% endif %}
+                                            <span class="order-amount">
+                                                <i class="fas fa-money-bill-wave me-1"></i>
+                                                TZS {{ order.amount|floatformat:0|intcomma }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="progress mt-2" style="height: 6px;">
+                                    {% if order.status == 'completed' %}
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%" 
+                                             aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                    {% elif order.status == 'in_progress' %}
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: 60%" 
+                                             aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                                    {% elif order.status == 'delivered' %}
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: 80%" 
+                                             aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
+                                    {% else %}
+                                        <div class="progress-bar bg-secondary" role="progressbar" style="width: 30%" 
+                                             aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex justify-content-between mt-1 small text-muted">
+                                    <span>Placed</span>
+                                    <span>In Progress</span>
+                                    <span>Delivered</span>
+                                    <span>Completed</span>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <a href="{% url 'orders:detail' order.id %}" class="btn btn-outline-primary btn-sm">
+                                    View Details
+                                </a>
+                                {% if order.can_deliver %}
+                                    <a href="{% url 'orders:deliver' order.id %}" class="btn btn-primary btn-sm mt-1">
+                                        Deliver Work
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="far fa-file-alt"></i>
+            </div>
+            <h3>No Orders Found</h3>
+            <p class="text-muted">
+                {% if request.GET.status %}
+                    You don't have any {{ request.GET.status }} orders yet.
+                {% else %}
+                    You haven't placed any orders yet.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo; Previous</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">&laquo; Previous</span>
+                </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">Next &raquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next &raquo;</span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
 {% endblock %}

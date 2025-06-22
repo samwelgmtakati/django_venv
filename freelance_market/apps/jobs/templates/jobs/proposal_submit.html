@@ -1,6 +1,7 @@
 {% extends "dashboard/base.html" %}
 {% load static %}
 {% load widget_tweaks %}
+{% load humanize %}
 
 {% block title %}Submit Proposal - {{ job.title }} | Freelance Market{% endblock title %}
 
@@ -8,6 +9,53 @@
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'dashboard/css/proposal_form.css' %}">
 <style>
+    /* File upload area styles */
+    .file-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 0.375rem;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+    
+    .file-upload-area:hover, .file-upload-area.border-primary {
+        border-color: #0d6efd;
+        background-color: #e9ecef;
+    }
+    
+    .file-upload-area i {
+        font-size: 2.5rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    /* File list styles */
+    #file-list .list-group-item {
+        padding: 0.75rem 1.25rem;
+    }
+    
+    #file-list .file-info {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+    }
+    
+    #file-list .file-name {
+        margin-left: 0.5rem;
+        word-break: break-all;
+    }
+    
+    #file-list .file-size {
+        margin-left: 0.5rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    #file-list .btn-remove {
+        margin-left: 0.5rem;
+    }
 /* Custom styles for the proposal form */
 .file-upload-area {
     border: 2px dashed #dee2e6;
@@ -64,8 +112,8 @@
                 <i class="fas fa-bars"></i>
             </button>
             <div class="ms-auto d-flex align-items-center">
-                <a href="{% url 'jobs:job_detail' job.slug %}" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-arrow-left me-1"></i> Back to Job
+                <a href="{% url 'dashboard:find_work' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Find Work
                 </a>
             </div>
         </div>
@@ -91,10 +139,10 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <p class="mb-2">
-                                        <i class="fas fa-dollar-sign text-gray-600 me-2"></i>
+                                        <span class="text-gray-600 me-2">TZS</span>
                                         <strong>Budget:</strong> 
                                         {% if job.budget %}
-                                            TZS {{ job.budget|floatformat:2 }}
+                                            {{ job.budget|floatformat:2|intcomma }}
                                             {% if job.job_type == 'hourly' %}/hr{% endif %}
                                         {% else %}
                                             <span class="text-muted">Not specified</span>
@@ -354,60 +402,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             dataTransfer.items.add(file);
-            
-            // Add to file list UI
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-            fileItem.innerHTML = `
-                <i class="fas fa-file-alt"></i>
-                <span>${file.name}</span>
-                <button type="button" class="btn-close" aria-label="Remove"></button>
-            `;
-            
-            // Add remove functionality
-            const removeBtn = fileItem.querySelector('.btn-close');
-            removeBtn.addEventListener('click', function() {
-                fileItem.remove();
-                // Remove from file input
-                const dt = new DataTransfer();
-                const input = fileInput.files;
-                
-                for (let j = 0; j < input.length; j++) {
-                    if (input[j].name !== file.name) {
-                        dt.items.add(input[j]);
-                    }
-                }
-                fileInput.files = dt.files;
-                updateFileList();
-            });
-            
-            document.getElementById('file-list').appendChild(fileItem);
         }
         
         // Update file input with all files
-        fileInput.files = dataTransfer.files;
-        updateFileList();
-    }
-                
-                fileInput.files = dt.files;
-            });
-            
-            document.getElementById('file-list').appendChild(fileItem);
-        }
-        
-        // Update file input with all files
-        fileInput.files = dataTransfer.files;
-            
-            // Check file size
-            if (file.size > maxFileSize) {
-                alert(`File ${file.name} is too large. Max size is {{ max_file_size }}MB.`);
-                continue;
-            }
-            
-            dataTransfer.items.add(file);
-        }
-        
-        // Update file input
         fileInput.files = dataTransfer.files;
         updateFileList();
     }
@@ -494,17 +491,53 @@ document.addEventListener('DOMContentLoaded', function() {
     coverLetter.addEventListener('input', updateWordCount);
     bidAmount.addEventListener('input', validateBid);
     
-    // Initialize word count
-    updateWordCount();
+    // File input change handler
+    fileInput.addEventListener('change', function(e) {
+        handleFiles(Array.from(e.target.files));
+    });
     
-    // File upload handling
+    // Drag and drop handlers
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        dropArea.classList.add('border-primary');
+    }
+    
+    function unhighlight() {
+        dropArea.classList.remove('border-primary');
+    }
+    
+    dropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+    }
+    
+    // Browse button click handler
     browseBtn.addEventListener('click', function() {
         fileInput.click();
     });
     
-    fileInput.addEventListener('change', function() {
-        handleFiles(this.files);
-    });
+    // Initialize word count and file list
+    updateWordCount();
+    updateFileList();
     
     // Drag and drop
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -539,36 +572,60 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Form submission
-    document.getElementById('proposal-form').addEventListener('submit', function(e) {
-        // Validate word count
-        const text = coverLetter.value.trim();
-        const words = text ? text.split(/\s+/) : [];
+    const proposalForm = document.getElementById('proposal-form');
+    if (proposalForm) {
+        // Add a hidden input to force redirect
+        const redirectInput = document.createElement('input');
+        redirectInput.type = 'hidden';
+        redirectInput.name = 'next';
+        redirectInput.value = '{% url "dashboard:find_work" %}';
+        proposalForm.appendChild(redirectInput);
         
-        if (words.length < 50) {
-            e.preventDefault();
-            alert('Your cover letter must be at least 50 words.');
-            return false;
-        }
-        
-        if (words.length > 1000) {
-            e.preventDefault();
-            alert('Your cover letter cannot exceed 1000 words.');
-            return false;
-        }
-        
-        // Validate bid amount
-        const value = parseFloat(bidAmount.value);
-        if (isNaN(value) || value < minBid || value > maxBid) {
-            e.preventDefault();
-            validateBid();
-            bidAmount.reportValidity();
-            return false;
-        }
-        
-        // Disable submit button to prevent double submission
-        const submitBtn = document.getElementById('submit-btn');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Submitting...';
+        proposalForm.addEventListener('submit', function(e) {
+            // Show loading state
+            const submitBtn = document.getElementById('submit-btn');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Submitting...';
+            
+            // Validate word count
+            const text = coverLetter.value.trim();
+            const words = text ? text.split(/\s+/) : [];
+            
+            if (words.length < 50) {
+                e.preventDefault();
+                alert('Your cover letter must be at least 50 words.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+                return false;
+            }
+            
+            if (words.length > 1000) {
+                e.preventDefault();
+                alert('Your cover letter cannot exceed 1000 words.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+                return false;
+            }
+            
+            // Validate bid amount
+            const bidAmount = document.getElementById('{{ form.bid_amount.id_for_label }}');
+            const minBid = parseFloat('{{ job.min_budget|default:0 }}');
+            const maxBid = parseFloat('{{ job.max_budget|default:1000000 }}');
+            const value = parseFloat(bidAmount.value);
+            
+            if (isNaN(value) || value < minBid || value > maxBid) {
+                e.preventDefault();
+                alert(`Your bid amount must be between TZS ${minBid.toLocaleString()} and TZS ${maxBid.toLocaleString()}`);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+                bidAmount.focus();
+                return false;
+            }
+            
+            // If all validations pass, allow form submission
+            // The server will handle the redirect via the 'next' parameter
+            return true;
     });
 });
 </script>

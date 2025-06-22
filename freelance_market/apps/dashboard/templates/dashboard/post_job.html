@@ -34,7 +34,7 @@
                     <p class="mb-0">Fill in the details below to create a new job posting</p>
                 </div>
                 <div class="card-body p-4">
-                    <form method="post" class="needs-validation" novalidate>
+                    <form method="post" class="needs-validation" novalidate id="jobForm">
                         {% csrf_token %}
                         <input type="hidden" id="form_action" name="form_action" value="draft">
                         
@@ -128,8 +128,9 @@
                                     <i class="bi bi-upload"></i>
                                 </a>
                                 {% else %}
+                                <input type="hidden" name="publish" value="1">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-send-check me-2"></i>Update Job
+                                    <i class="bi bi-send-check me-2"></i>Post Job
                                 </button>
                                 {% endif %}
                             </div>
@@ -144,29 +145,87 @@
 
 {% block extra_scripts %}
 <script>
-// Form validation
-(function () {
+// Form validation and submission handler
+document.addEventListener('DOMContentLoaded', function() {
     'use strict';
     
-    // Fetch all the forms we want to apply custom Bootstrap validation styles to
-    const forms = document.querySelectorAll('.needs-validation');
+    const form = document.getElementById('jobForm');
+    if (!form) return;
     
-    // Loop over them and handle submission
-    Array.from(forms).forEach(form => {
-        form.addEventListener('submit', function(event) {
-            // Only validate if not clicking the publish button
-            const clickedButton = document.activeElement;
-            if (clickedButton && clickedButton.name === 'publish') {
-                // For publish, ensure required fields are filled
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-            }
-            // For draft, always allow submission
+    // Track form submission state
+    let isSubmitting = false;
+    
+    // Store original button states
+    const submitButtons = form.querySelectorAll('button[type="submit"]');
+    const originalButtonStates = [];
+    
+    submitButtons.forEach(button => {
+        originalButtonStates.push({
+            element: button,
+            html: button.innerHTML,
+            disabled: button.disabled
+        });
+    });
+    
+    // Handle form submission
+    form.addEventListener('submit', function(event) {
+        // Prevent multiple submissions
+        if (isSubmitting) {
+            event.preventDefault();
+            return false;
+        }
+
+        // Set submitting state
+        isSubmitting = true;
+        
+        // Disable all form elements to prevent multiple submissions
+        const formElements = form.elements;
+        for (let i = 0; i < formElements.length; i++) {
+            formElements[i].readOnly = true;
+            formElements[i].disabled = formElements[i].type === 'submit' ? true : formElements[i].disabled;
+        }
+        
+        // Show loading state on buttons
+        originalButtonStates.forEach(button => {
+            button.element.disabled = true;
+            button.element.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+        });
+        
+        // Check if this is a publish action
+        const isPublish = form.querySelector('input[name="publish"]') !== null;
+        
+        // Validate only for publish action
+        if (isPublish && !form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
             
-            form.classList.add('was-validated');
-        }, false);
+            // Reset submission state
+            isSubmitting = false;
+            
+            // Re-enable form elements
+            for (let i = 0; i < formElements.length; i++) {
+                formElements[i].readOnly = false;
+                formElements[i].disabled = false;
+            }
+            
+            // Reset buttons
+            originalButtonStates.forEach(button => {
+                button.element.disabled = button.disabled;
+                button.element.innerHTML = button.html;
+            });
+            
+            return false;
+        }
+        
+        // If we get here, form is valid or it's a draft
+        form.classList.add('was-validated');
+        
+        // Add a small delay to ensure the loading state is visible
+        setTimeout(() => {
+            // The form will now submit naturally
+        }, 100);
+        
+        return true;
     });
     
     // Ensure textareas are properly styled
@@ -174,6 +233,6 @@
         textarea.style.minHeight = '120px';
         textarea.style.width = '100%';
     });
-})();
+});
 </script>
 {% endblock extra_scripts %}

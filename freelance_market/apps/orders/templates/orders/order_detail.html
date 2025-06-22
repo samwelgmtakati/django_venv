@@ -1,5 +1,7 @@
 {% extends "dashboard/base.html" %}
-{% block title %}Order #{{ order.id }}{% endblock %}
+{% load humanize %}
+
+{% block title %}Order #{{ order.id }}{% endblock title %}
 
 {% block extra_css %}
 <style>
@@ -10,41 +12,305 @@
 .badge.bg-success { background-color: #198754 !important; color: white !important; }
 .badge.bg-warning { background-color: #ffc107 !important; color: #000 !important; }
 .badge.bg-danger { background-color: #dc3545 !important; color: white !important; }
+.star-rating { display: inline-block; font-size: 1.2em; color: #fd7e14; }
+.timeline { position: relative; padding-left: 2rem; margin: 2rem 0; }
+.timeline:before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+.timeline-item { position: relative; margin-bottom: 1.5rem; }
+.timeline-item:last-child { margin-bottom: 0; }
+.timeline-badge {
+    position: absolute;
+    left: -2rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #0d6efd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.timeline-badge i { font-size: 0.75rem; color: #0d6efd; }
+.timeline-content { padding: 1rem; background: #f8f9fa; border-radius: 0.25rem; }
+.timeline-date { font-size: 0.75rem; color: #6c757d; }
 </style>
-{% endblock %}
+{% endblock extra_css %}
 
 {% block content %}
-<!-- Debug Info: {{ debug_info|default:"No debug info" }} -->
-<h2>Order #{{ order.id }} - {{ order.job.title }}</h2>
-<p>Status: {{ order.status }} <span class="badge {{ order.get_status_badge_class }}">{{ order.get_status_display }}</span></p>
-<hr>
-<h4>Deliveries</h4>
-<ul class="list-group mb-3">
-  {% for delivery in order.deliveries.all %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-      {{ delivery.uploaded_at|date:"Y-m-d H:i" }}
-      {% if delivery.file %}<a href="{{ delivery.file.url }}" class="btn btn-sm btn-outline-secondary">Download file</a>{% endif %}
-    </li>
-  {% empty %}
-    <li class="list-group-item">No deliveries yet.</li>
-  {% endfor %}
-</ul>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'orders:list' %}">Orders</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">#{{ order.id }}</li>
+                </ol>
+            </nav>
+            <h2 class="mb-0">Order #{{ order.id }}: {{ order.job.title }}</h2>
+        </div>
+        <span class="badge {{ order.get_status_badge_class }} fs-6">
+            {{ order.get_status_display }}
+        </span>
+    </div>
 
-{% if user == order.client and order.status == "delivered" %}
-<form method="post" action="{% url 'orders:approve' order.pk %}" class="d-inline">
-  {% csrf_token %}
-  <button type="submit" class="btn btn-success mb-2">Approve Delivery</button>
-</form>
-{% endif %}
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Order Timeline -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <!-- Order Created -->
+                        <div class="timeline-item">
+                            <div class="timeline-badge">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">Order Created</h6>
+                                    <small class="timeline-date">{{ order.created_at|date:"M d, Y H:i" }}</small>
+                                </div>
+                                <p class="mb-0">Order was created and is now pending.</p>
+                            </div>
+                        </div>
 
-{% if order.review %}
-<h4>Review</h4>
-<p><strong>Rating:</strong> {{ order.review.rating }}/5</p>
-<p>{{ order.review.comment }}</p>
-{% elif user == order.client and order.status == "approved" %}
-<a href="{% url 'orders:review' order.pk %}" class="btn btn-success">Leave Review</a>
-{% endif %}
-{% if user == order.freelancer %}
-<a href="{% url 'orders:deliver' order.pk %}" class="btn btn-primary">Upload Delivery</a>
-{% endif %}
-{% endblock %}
+                        <!-- Order Started -->
+                        {% if order.started_at %}
+                        <div class="timeline-item">
+                            <div class="timeline-badge">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">Order In Progress</h6>
+                                    <small class="timeline-date">{{ order.started_at|date:"M d, Y H:i" }}</small>
+                                </div>
+                                <p class="mb-0">Freelancer has started working on your order.</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Order Deliveries -->
+                        {% for delivery in order.deliveries.all %}
+                        <div class="timeline-item">
+                            <div class="timeline-badge">
+                                <i class="fas fa-paper-plane"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">Work Delivered</h6>
+                                    <small class="timeline-date">{{ delivery.uploaded_at|date:"M d, Y H:i" }}</small>
+                                </div>
+                                {% if delivery.message %}
+                                    <p class="mb-2">{{ delivery.message }}</p>
+                                {% endif %}
+                                {% if delivery.file %}
+                                    <a href="{{ delivery.file.url }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i> Download Files
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Order Completed -->
+                        {% if order.status == order.STATUS_APPROVED or order.status == order.STATUS_COMPLETED %}
+                        <div class="timeline-item">
+                            <div class="timeline-badge">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">Order Completed</h6>
+                                    <small class="timeline-date">{{ order.completed_at|date:"M d, Y H:i" }}</small>
+                                </div>
+                                <p class="mb-0">Order was marked as completed.</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deliveries Section -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Deliveries</h5>
+                    {% if can_deliver %}
+                        <a href="{% url 'orders:deliver' order.id %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-upload me-1"></i> Upload Delivery
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if order.deliveries.all %}
+                        <div class="list-group">
+                            {% for delivery in order.deliveries.all %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Delivery #{{ forloop.counter }}</h6>
+                                    <small>{{ delivery.uploaded_at|date:"M d, Y H:i" }}</small>
+                                </div>
+                                {% if delivery.message %}
+                                    <p class="mb-2">{{ delivery.message }}</p>
+                                {% endif %}
+                                {% if delivery.file %}
+                                    <a href="{{ delivery.file.url }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i> Download Files
+                                    </a>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info mb-0">No deliveries yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Reviews Section -->
+            {% if order.review_set.exists %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Reviews</h5>
+                </div>
+                <div class="card-body">
+                    {% for review in order.review_set.all %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <h6>
+                                    {{ review.reviewer.get_full_name|default:review.reviewer.username }}
+                                    <div class="star-rating">
+                                        {% for i in "12345"|make_list %}
+                                            {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </h6>
+                                <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            <p class="mb-0 mt-2">{{ review.comment }}</p>
+                        </div>
+                        {% if not forloop.last %}<hr>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Order Summary -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Order ID</dt>
+                        <dd class="col-sm-7">#{{ order.id }}</dd>
+                        
+                        <dt class="col-sm-5">Status</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge {{ order.get_status_badge_class }}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-5">Amount</dt>
+                        <dd class="col-sm-7">TZS {{ order.amount|floatformat:2|intcomma }}</dd>
+                        
+                        <dt class="col-sm-5">Created</dt>
+                        <dd class="col-sm-7">{{ order.created_at|date:"M d, Y" }}</dd>
+                        
+                        {% if order.deadline %}
+                        <dt class="col-sm-5">Deadline</dt>
+                        <dd class="col-sm-7 {% if order.is_overdue and order.status != order.STATUS_COMPLETED %}text-danger{% endif %}">
+                            {{ order.deadline|date:"M d, Y" }}
+                            {% if order.is_overdue and order.status != order.STATUS_COMPLETED %}
+                                <span class="badge bg-danger ms-1">Overdue</span>
+                            {% endif %}
+                        </dd>
+                        {% endif %}
+                        
+                        <dt class="col-sm-5">Client</dt>
+                        <dd class="col-sm-7">{{ order.client.get_full_name|default:order.client.username }}</dd>
+                        
+                        <dt class="col-sm-5">Freelancer</dt>
+                        <dd class="col-sm-7">{{ order.freelancer.get_full_name|default:order.freelancer.username }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Order Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if can_approve %}
+                            <form method="post" action="{% url 'orders:approve' order.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success w-100 mb-2">
+                                    <i class="fas fa-check-circle me-1"></i> Approve Delivery
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        {% if can_request_revision %}
+                            <a href="{% url 'orders:request_revision' order.id %}" class="btn btn-warning w-100 mb-2">
+                                <i class="fas fa-redo me-1"></i> Request Revision
+                            </a>
+                        {% endif %}
+
+                        {% if can_review %}
+                            <a href="{% url 'orders:review' order.id %}" class="btn btn-info text-white w-100 mb-2">
+                                <i class="fas fa-star me-1"></i> Leave Review
+                            </a>
+                        {% endif %}
+
+                        {% if can_deliver %}
+                            <a href="{% url 'orders:deliver' order.id %}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-upload me-1"></i> Upload Delivery
+                            </a>
+                        {% endif %}
+
+                        <a href="{% url 'jobs:detail' order.job.id %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-eye me-1"></i> View Job
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Messages -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Order Messages</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        {% if order.client == user %}
+                            Contact the freelancer if you have any questions about your order.
+                        {% else %}
+                            Contact the client if you need any clarification.
+                        {% endif %}
+                    </p>
+                    <a href="#" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-envelope me-1"></i> Send Message
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

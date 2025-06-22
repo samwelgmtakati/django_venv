@@ -1,4 +1,5 @@
 {% extends 'dashboard/base.html' %}
+{% load static %}
 
 {% block title %}{{ freelancer.user.get_full_name|default:freelancer.user.username }} - Freelancer Profile{% endblock %}
 
@@ -81,9 +82,11 @@
     <!-- Profile Header -->
     <div class="profile-header text-center position-relative">
         <div class="container">
-            <img src="{{ freelancer.user.profile_picture.url|default:'/static/images/default-avatar.png' }}" 
+            <img src="{% if freelancer.user.profile_picture and freelancer.user.profile_picture.url %}{{ freelancer.user.profile_picture.url }}{% else %}{% static 'dashboard/img/default-avatar.png' %}{% endif %}" 
                  alt="{{ freelancer.user.get_full_name|default:freelancer.user.username }}" 
-                 class="profile-avatar mb-3">
+                 class="profile-avatar mb-3"
+                 width="150"
+                 height="150">
             <h1 class="h2 mb-2">{{ freelancer.user.get_full_name|default:freelancer.user.username }}</h1>
             <p class="h5 mb-3 opacity-75">{{ freelancer.title|default:"Professional Freelancer" }}</p>
             

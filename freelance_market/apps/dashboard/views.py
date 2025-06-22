@@ -555,117 +555,110 @@ def post_job(request):
     """
     View for clients to post a new job
     """
-    from apps.jobs.models import JobCategory
+    from apps.jobs.models import Job, JobCategory
     from datetime import date
-    from django.http import JsonResponse
+    from django.http import JsonResponse, HttpResponseBadRequest
     from django.urls import reverse
     import json
     import logging
+    import uuid
     
     # Set up logging
     logger = logging.getLogger(__name__)
     logger.info("post_job view called")
     
+    # Get categories for the form
     categories = JobCategory.objects.all()
     
-    if request.method == 'POST':
-        try:
-            logger.info(f"POST data: {request.POST}")
-            logger.info(f"Content type: {request.content_type}")
-            
-            if request.content_type == 'application/json':
-                try:
-                    data = json.loads(request.body)
-                    logger.info(f"Parsed JSON data: {data}")
-                except json.JSONDecodeError as e:
-                    logger.error(f"JSON decode error: {e}")
-                    return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
-            else:
-                data = request.POST.dict()
-                logger.info(f"Form data: {data}")
-            
-            # Debug log the entire POST data
-            logger.info(f"POST data: {dict(request.POST)}")
-            
-            # Debug log the entire POST data
-            logger.info(f"POST data: {dict(request.POST)}")
-            
-            # Check which button was clicked
-            is_publish = 'publish' in request.POST
-            status = 'published' if is_publish else 'draft'
-            logger.info(f"Publish button clicked: {is_publish}, Setting status to: {status}")
-            
-            # Create a new job
-            try:
-                job = Job(
-                    title=data.get('jobTitle'),
-                    description=data.get('jobDescription'),
-                    requirements=data.get('jobRequirements', ''),
-                    client=request.user,
-                    status=status,
-                    budget=data.get('jobBudget') or None,
-                    deadline=data.get('jobDeadline') or None,
-                    created_at=timezone.now(),
-                    published_at=timezone.now() if is_publish else None
-                )
-                
-                # Set category if selected
-                category_id = data.get('jobCategory')
-                if category_id:
-                    logger.info(f"Setting category: {category_id}")
-                    job.category_id = category_id
-                
-                # Save the job
-                job.save()
-                logger.info(f"Job created successfully with ID: {job.id}")
-                
-                # Prepare response
-                response_data = {
-                    'success': True,
-                    'message': 'Job saved as draft successfully!' if status == 'draft' else 'Job published successfully!',
-                    'redirect': reverse('dashboard:client_dashboard')
-                }
-                
-                if request.content_type == 'application/json':
-                    logger.info("Returning JSON response")
-                    return JsonResponse(response_data)
-                else:
-                    if status == 'draft':
-                        messages.success(request, 'Job saved as draft successfully!')
-                    else:
-                        messages.success(request, 'Job published successfully!')
-                    return redirect('dashboard:client_dashboard')
-                
-            except Exception as e:
-                logger.error(f"Error creating job: {str(e)}", exc_info=True)
-                raise
-            
-        except Exception as e:
-            error_msg = f'Error saving job: {str(e)}'
-            logger.error(error_msg, exc_info=True)
-            
-            if request.content_type == 'application/json':
-                return JsonResponse({'success': False, 'error': error_msg}, status=400)
-            else:
-                messages.error(request, error_msg)
-                # Return to the form with the data if not JSON
-                context = {
-                    'categories': categories,
-                    'today': date.today(),
-                    'form_data': data if 'data' in locals() else {}
-                }
-                return render(request, 'dashboard/post_job.html', context)
-    
-    # For GET requests or if there was an error with form submission
-    context = {
-        'categories': categories,
-        'today': date.today()
-    }
-    
-    if request.content_type == 'application/json':
-        return JsonResponse(context)
-    else:
+    # Handle GET requests - show the form
+    if request.method != 'POST':
+        context = {
+            'categories': categories,
+            'today': date.today(),
+            'form_token': str(uuid.uuid4())  # Generate a new token for each form load
+        }
         return render(request, 'dashboard/post_job.html', context)
+    
+    # Handle POST requests - process the form
+    try:
+        # Get form data based on content type
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON decode error: {e}")
+                return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
+        else:
+            data = request.POST.dict()
+        
+        logger.info(f"Processing job submission. Data: {data}")
+        
+        # Check if this is a publish action
+        is_publish = 'publish' in data or 'publish' in request.POST
+        status = 'published' if is_publish else 'draft'
+        logger.info(f"Setting job status to: {status}")
+        
+        # Check for existing similar job to prevent duplicates
+        job_data = {
+            'title': data.get('jobTitle'),
+            'description': data.get('jobDescription'),
+            'requirements': data.get('jobRequirements', ''),
+            'client': request.user,
+            'status': status,
+            'budget': data.get('jobBudget') or None,
+            'deadline': data.get('jobDeadline') or None,
+            'published_at': timezone.now() if is_publish else None
+        }
+        
+        # Set category if selected
+        category_id = data.get('jobCategory')
+        if category_id:
+            logger.info(f"Setting category: {category_id}")
+            job_data['category_id'] = category_id
+        
+        # Use get_or_create to prevent duplicates based on title and client
+        job, created = Job.objects.get_or_create(
+            title=job_data['title'],
+            client=request.user,
+            defaults=job_data
+        )
+        
+        if not created:
+            logger.warning(f"Duplicate job detected: {job.title} for user {request.user}")
+            # Update existing job with new data
+            for key, value in job_data.items():
+                setattr(job, key, value)
+            job.save()
+        
+        logger.info(f"Job {'created' if created else 'updated'} successfully with ID: {job.id}")
+        
+        # Prepare success response
+        success_message = 'Job saved as draft successfully!' if status == 'draft' else 'Job published successfully!'
+        response_data = {
+            'success': True,
+            'message': success_message,
+            'redirect': reverse('dashboard:client_dashboard')
+        }
+        
+        if request.content_type == 'application/json':
+            return JsonResponse(response_data)
+            
+        messages.success(request, success_message)
+        return redirect('dashboard:client_dashboard')
+        
+    except Exception as e:
+        error_msg = f'Error saving job: {str(e)}'
+        logger.error(error_msg, exc_info=True)
+        
+        if request.content_type == 'application/json':
+            return JsonResponse({'success': False, 'error': error_msg}, status=400)
+            
+        messages.error(request, error_msg)
+        return render(request, 'dashboard/post_job.html', {
+            'categories': categories,
+            'today': date.today(),
+            'form_data': data if 'data' in locals() else {}
+        })
 
 @login_required
 def find_work(request):
