@@ -127,14 +127,7 @@
                                     </span>
                                 </a>
                             </li>
-                            {% if not user.is_freelancer %}
-                                <li class="nav-item">
-                                    <a href="{% url 'freelancer:create_profile' %}" class="nav-link">
-                                        <i class="bi bi-person-plus"></i>
-                                        <span>Become a Freelancer</span>
-                                    </a>
-                                </li>
-                            {% endif %}
+
                         </ul>
                     </div>
                     <!-- Projects/Jobs Section (Client Only) -->

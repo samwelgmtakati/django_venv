@@ -2,7 +2,7 @@ from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Q, Count, Avg, F
+from django.db.models import Q, Count, Avg, F, Case, When, Value, CharField
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import connection, transaction, models
 from django.http import JsonResponse
@@ -481,8 +481,9 @@ def freelancer_dashboard(request):
     
     # Import here to avoid circular imports
     from apps.services.models import Service
-    from apps.jobs.models import JobProposal, Job
-    from django.db.models import Count, Q
+    from apps.jobs.models import JobProposal, Job, JobCategory
+    from django.db.models import Count, Q, Sum, F, Case, When, Value, IntegerField
+    from django.utils import timezone
     
     # Get services data
     services = Service.objects.filter(
@@ -495,16 +496,31 @@ def freelancer_dashboard(request):
         freelancer=request.user
     ).select_related('job').order_by('-created_at')[:5]
     
-    # Get jobs data
+    # Get jobs data with more details
     active_jobs = Job.objects.filter(
         proposals__freelancer=request.user,
         status__in=['in_progress', 'active']
-    ).distinct()
+    ).distinct().annotate(
+        status_color=Case(
+            When(status='in_progress', then=Value('warning')),
+            When(status='active', then=Value('success')),
+            default=Value('secondary'),
+            output_field=CharField()
+        )
+    )
     
     completed_jobs = Job.objects.filter(
         proposals__freelancer=request.user,
         status='completed'
     ).distinct()
+    
+    # Calculate earnings
+    monthly_earnings = JobProposal.objects.filter(
+        freelancer=request.user,
+        status='completed',
+        updated_at__month=timezone.now().month,
+        updated_at__year=timezone.now().year
+    ).aggregate(total_earnings=Sum('bid_amount'))['total_earnings'] or 0
     
     # Get review statistics
     from apps.reviews.models import Review
@@ -518,8 +534,7 @@ def freelancer_dashboard(request):
         four_star=Count('id', filter=Q(rating=4)),
         three_star=Count('id', filter=Q(rating=3)),
         two_star=Count('id', filter=Q(rating=2)),
-        one_star=Count('id', filter=Q(rating=1))
-    )
+        one_star=Count('id', filter=Q(rating=1)))
     
     # Calculate percentages for each rating
     total = review_stats['total_reviews'] or 1  # Avoid division by zero
@@ -529,18 +544,75 @@ def freelancer_dashboard(request):
 
     # Get recommended jobs (jobs in the same categories as freelancer's skills)
     recommended_jobs = Job.objects.filter(
-        status='published'  # Using 'published' status instead of is_active
-    )
+        status='published'
+    ).select_related('client', 'category').prefetch_related('skills')
     
     # Add category filter if freelancer has skills
     if hasattr(request.user, 'freelancer') and request.user.freelancer.skills.exists():
         recommended_jobs = recommended_jobs.filter(
-            category__in=request.user.freelancer.skills.all()
+            skills__in=request.user.freelancer.skills.all()
         )
     
+    # Apply exclusions and get distinct results, then slice
     recommended_jobs = recommended_jobs.exclude(
+        Q(proposals__freelancer=request.user) | Q(proposals__status__in=['accepted', 'completed'])
+    ).distinct()[:6]
+    
+    # Get recent activities from various sources
+    recent_activities = []
+    
+    # Get recent messages
+    try:
+        from apps.messaging.models import Message
+        recent_messages = Message.objects.filter(
+            recipient=request.user
+        ).select_related('sender').order_by('-created_at')[:3]
+        
+        for msg in recent_messages:
+            recent_activities.append({
+                'title': f'New Message from {msg.sender.get_full_name() or msg.sender.username}',
+                'message': msg.content[:100] + '...' if len(msg.content) > 100 else msg.content,
+                'icon': 'envelope',
+                'type_color': 'primary',
+                'timestamp': msg.created_at
+            })
+    except ImportError:
+        pass
+    
+    # Get recent job updates
+    recent_jobs = Job.objects.filter(
         proposals__freelancer=request.user
-    ).distinct()[:3]
+    ).order_by('-updated_at')[:3]
+    
+    for job in recent_jobs:
+        recent_activities.append({
+            'title': f'Job Status Updated: {job.title}',
+            'message': f'Status changed to {job.get_status_display()}',
+            'icon': 'briefcase',
+            'type_color': 'info',
+            'timestamp': job.updated_at
+        })
+    
+    # Get recent reviews
+    try:
+        from apps.reviews.models import Review
+        recent_reviews = Review.objects.filter(
+            user_being_reviewed=request.user
+        ).select_related('reviewer').order_by('-created_at')[:2]
+        
+        for review in recent_reviews:
+            recent_activities.append({
+                'title': 'New Review Received',
+                'message': f'{review.rating}★ - {review.comment[:80]}...' if review.comment else f'{review.rating}★ rating',
+                'icon': 'star-fill',
+                'type_color': 'warning',
+                'timestamp': review.created_at
+            })
+    except ImportError:
+        pass
+    
+    # Sort activities by timestamp
+    recent_activities.sort(key=lambda x: x['timestamp'], reverse=True)
     
     # Get freelancer's skills if they exist
     try:
@@ -550,22 +622,35 @@ def freelancer_dashboard(request):
         skills = []
         print(f"Error getting freelancer skills: {e}")
     
+    # Calculate success rate
+    total_proposals = JobProposal.objects.filter(freelancer=request.user).count()
+    successful_proposals = JobProposal.objects.filter(
+        freelancer=request.user,
+        status='completed'
+    ).count()
+    success_rate = (successful_proposals / total_proposals * 100) if total_proposals > 0 else 0
+    
+    # Prepare context
     context = {
         'active_page': 'dashboard',
         'services': services,
         'services_count': services.count(),
         'total_services': Service.objects.filter(freelancer=request.user).count(),
-        'total_proposals': JobProposal.objects.filter(freelancer=request.user).count(),
+        'total_proposals': total_proposals,
         'active_proposals': JobProposal.objects.filter(
             freelancer=request.user,
             status__in=['pending', 'accepted']
         ).count(),
-        'active_jobs': active_jobs.count(),
+        'active_jobs': active_jobs,
+        'active_jobs_count': active_jobs.count(),
         'completed_jobs': completed_jobs.count(),
         'proposals': proposals,
-        'stats': review_stats,  # Add review statistics to the context
+        'stats': review_stats,
         'recommended_jobs': recommended_jobs,
-        'skills': skills,  # Add skills to the context
+        'skills': skills,
+        'monthly_earnings': monthly_earnings,
+        'success_rate': round(success_rate, 1),
+        'recent_activities': recent_activities[:5],  # Limit to 5 most recent
     }
     return render(request, 'dashboard/freelancer_dashboard.html', context)
 

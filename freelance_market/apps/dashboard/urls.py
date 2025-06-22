@@ -25,6 +25,7 @@ urlpatterns = [
     
     # Freelancer dashboard
     path('freelancer/', login_required(views.freelancer_dashboard), name='freelancer_dashboard'),
+    path('freelancer/profile/', login_required(views.freelancer_profile), name='freelancer_profile'),
     
     # Skills management
     path('skills/', login_required(views_skills.freelancer_skills), name='freelancer_skills'),
