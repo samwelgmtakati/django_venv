@@ -384,6 +384,9 @@ class ProposalDetailView(LoginRequiredMixin, DetailView):
         job = proposal.job
         context['job'] = job
         
+        # Add job_slug to context for URL reversing
+        context['job_slug'] = self.kwargs.get('job_slug')
+        
         # User type and permissions
         is_client = self.request.user == job.client
         is_freelancer = self.request.user == proposal.freelancer

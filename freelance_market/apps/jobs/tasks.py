@@ -98,7 +98,7 @@ def send_proposal_submitted_notification(proposal_id):
             'client_name': recipient.get_full_name() or recipient.username,
             'freelancer_name': proposal.freelancer.get_full_name() or proposal.freelancer.username,
             'job_title': proposal.job.title,
-            'proposal_url': settings.SITE_URL + reverse('jobs:proposal_detail', args=[proposal.job.slug, proposal.id]),
+            'proposal_url': settings.SITE_URL + reverse('jobs:proposal_detail', kwargs={'job_slug': proposal.job.slug, 'pk': proposal.id}),
             'site_name': settings.SITE_NAME,
             'contact_email': settings.DEFAULT_FROM_EMAIL,
         }
@@ -283,7 +283,7 @@ def send_new_attachment_notification(self, attachment_id, proposal_id):
             'filename': attachment.filename,
             'file_type': attachment.get_file_type_display(),
             'file_size': attachment.filesize_formatted(),
-            'proposal_url': settings.SITE_URL + reverse('jobs:proposal_detail', args=[proposal_id]),
+            'proposal_url': settings.SITE_URL + reverse('jobs:proposal_detail', kwargs={'job_slug': job.slug, 'pk': proposal_id}),
             'site_name': settings.SITE_NAME,
             'contact_email': settings.DEFAULT_FROM_EMAIL,
         }

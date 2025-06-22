@@ -1,11 +1,45 @@
 {% extends "dashboard/base.html" %}
 {% load static %}
+{% load dashboard_filters %}
 
 {% block title %}Freelancer Dashboard{% endblock title %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'dashboard/css/freelancer-dashboard.css' %}">
-{% endblock extra_css %}
+    <style>
+        .stat-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            height: 100%;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .rating-stars {
+            color: #ffc107;
+            font-size: 0.9rem;
+        }
+    </style>
+{% endblock %}
 
 {% block content %}
 <div class="freelancer-dashboard">
@@ -25,6 +59,49 @@
 
         <!-- Stats Row -->
         <div class="row">
+            <!-- Reviews Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <a href="{% url 'reviews:user_reviews' user.username %}" class="text-decoration-none">
+                    <div class="card stat-card h-100 hover-shadow">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="stat-label">My Reviews</h6>
+                                    <h3 class="stat-value">
+                                        {% if stats %}{{ stats.total_reviews|default:0 }}{% else %}0{% endif %}
+                                    </h3>
+                                    {% if stats and stats.avg_rating %}
+                                        <div class="rating-stars">
+                                            {% with stats.avg_rating|floatformat:0|add:0 as filled_stars %}
+                                                {% for _ in filled_stars|get_range %}
+                                                    <i class="bi bi-star-fill"></i>
+                                                {% endfor %}
+                                                {% with remaining=5|subtract:filled_stars %}
+                                                    {% if remaining > 0 %}
+                                                        {% for _ in remaining|get_range %}
+                                                            <i class="bi bi-star"></i>
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% endwith %}
+                                            <span class="text-muted ms-1">{{ stats.avg_rating|floatformat:1 }}/5.0</span>
+                                        </div>
+                                    {% else %}
+                                        <div class="rating-stars text-muted">
+                                            {% for _ in "12345" %}<i class="bi bi-star"></i>{% endfor %}
+                                            <span class="ms-1">0.0/5.0</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="stat-icon bg-warning-light">
+                                    <i class="fas fa-star text-warning"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
             <!-- Total Services Card -->
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card stat-card h-100">
@@ -277,4 +354,4 @@
     </div>
 </div>
 
-{% endblock %}
+{% endblock content %}

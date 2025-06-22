@@ -1,4 +1,23 @@
-{% extends "base.html" %}
+NoReverseMatch at /jobs/kaaaaaamanda/proposals/10/
+Reverse for 'proposal_detail' with keyword arguments '{'pk': 4}' not found. 1 pattern(s) tried: ['jobs/(?P<job_slug>[-a-zA-Z0-9_]+)/proposals/(?P<pk>[0-9]+)/\\Z']
+Request Method:	GET
+Request URL:	http://localhost:8000/jobs/kaaaaaamanda/proposals/10/
+Django Version:	5.2.3
+Exception Type:	NoReverseMatch
+Exception Value:	
+Reverse for 'proposal_detail' with keyword arguments '{'pk': 4}' not found. 1 pattern(s) tried: ['jobs/(?P<job_slug>[-a-zA-Z0-9_]+)/proposals/(?P<pk>[0-9]+)/\\Z']
+Exception Location:	/home/mtakatigs/projects/ATC_projects/python_projects/django_venv/lib/python3.12/site-packages/django/urls/resolvers.py, line 831, in _reverse_with_prefix
+Raised during:	apps.jobs.views.ProposalDetailView
+Python Executable:	/home/mtakatigs/projects/ATC_projects/python_projects/django_venv/bin/python
+Python Version:	3.12.3
+Python Path:	
+['/home/mtakatigs/projects/ATC_projects/python_projects/django_venv/freelance_market',
+ '/home/mtakatigs/projects/ATC_projects/python_projects/django_venv/freelance_market',
+ '/usr/lib/python312.zip',
+ '/usr/lib/python3.12',
+ '/usr/lib/python3.12/lib-dynload',
+ '/home/mtakatigs/projects/ATC_projects/python_projects/django_venv/lib/python3.12/site-packages']
+Server time:	Sun, 22 Jun 2025 08:27:04 +0000{% extends "base.html" %}
 {% load static %}
 
 {% block title %}Proposal from {{ proposal.freelancer.get_full_name|default:proposal.freelancer.username }}{% endblock title %}

@@ -37,6 +37,7 @@
         {% block extra_css %}
         {% endblock extra_css %}
     </head>
+    {% comment %}Debug: {{ total_projects }}, {{ active_projects }}, {{ completed_projects }}, {{ draft_projects }}{% endcomment %}
     <body>
         <!-- Sidebar -->
         <div class="sidebar">
@@ -146,7 +147,9 @@
                                        class="nav-link {% if active_page == 'my_projects' %}active{% endif %}">
                                         <i class="bi bi-folder2-open"></i>
                                         <span>All Projects</span>
-                                        <span class="badge bg-primary rounded-pill ms-auto">5</span>
+                                        {% if total_projects is not None %}
+                                        <span class="badge bg-primary rounded-pill ms-auto">{{ total_projects }}</span>
+                                        {% endif %}
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -154,7 +157,9 @@
                                        class="nav-link {% if active_page == 'active_projects' %}active{% endif %}">
                                         <i class="bi bi-lightning-charge"></i>
                                         <span>Active</span>
-                                        <span class="badge bg-success rounded-pill ms-auto">2</span>
+                                        {% if active_projects is not None %}
+                                        <span class="badge bg-success rounded-pill ms-auto">{{ active_projects }}</span>
+                                        {% endif %}
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -162,7 +167,9 @@
                                        class="nav-link {% if active_page == 'completed_projects' %}active{% endif %}">
                                         <i class="bi bi-check-circle"></i>
                                         <span>Completed</span>
-                                        <span class="badge bg-secondary rounded-pill ms-auto">3</span>
+                                        {% if completed_projects is not None %}
+                                        <span class="badge bg-secondary rounded-pill ms-auto">{{ completed_projects }}</span>
+                                        {% endif %}
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -170,7 +177,9 @@
                                        class="nav-link {% if active_page == 'draft_projects' %}active{% endif %}">
                                         <i class="bi bi-file-earmark-text"></i>
                                         <span>Drafts</span>
-                                        <span class="badge bg-warning text-dark rounded-pill ms-auto">1</span>
+                                        {% if draft_projects is not None %}
+                                        <span class="badge bg-warning text-dark rounded-pill ms-auto">{{ draft_projects }}</span>
+                                        {% endif %}
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -178,7 +187,7 @@
                                        class="nav-link {% if active_page == 'active_projects' %}active{% endif %}">
                                         <i class="bi bi-briefcase"></i>
                                         <span>Open Projects</span>
-                                        <span class="badge bg-info rounded-pill ms-auto">{{ active_projects_count|default:0 }}</span>
+                                        <span class="badge bg-info rounded-pill ms-auto">{{ active_projects|default:0 }}</span>
                                     </a>
                                 </li>
                                 <li class="nav-item">

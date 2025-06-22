@@ -1,5 +1,5 @@
 {% extends "dashboard/base.html" %}
-{% load i18n static %}
+{% load i18n static review_tags %}
 
 {% block title %}{% trans "Leave a Review" %}{% endblock title %}
 
@@ -12,11 +12,32 @@
     padding: 2rem;
 }
 
+.rating-category {
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.rating-category h5 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rating-category h5 i {
+    color: #f39c12;
+}
+
 .star-rating {
     direction: rtl;
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     text-align: center;
-    margin: 1.5rem 0 2.5rem;
+    margin: 1rem 0 0.5rem;
     unicode-bidi: bidi-override;
 }
 
@@ -27,7 +48,7 @@
 .star-rating label {
     color: #e0e0e0;
     cursor: pointer;
-    padding: 0 8px;
+    padding: 0 5px;
     transition: color 0.2s, transform 0.1s;
     display: inline-block;
 }
@@ -45,6 +66,14 @@
 
 .star-rating label:hover {
     transform: scale(1.2);
+}
+
+.rating-text {
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-align: center;
+    min-height: 1.5rem;
+    margin-top: 0.5rem;
 }
 
 .form-group {
@@ -98,13 +127,57 @@
     border-top: 1px solid #eee;
 }
 
+.rating-summary {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e9ecef;
+}
+
+.rating-summary h5 {
+    color: #2c3e50;
+    margin-bottom: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rating-summary h5 i {
+    color: #f39c12;
+}
+
+.rating-summary-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.rating-summary-stars {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.rating-summary-stars .bi {
+    font-size: 2rem;
+    color: #ffc107;
+    margin: 0 2px;
+}
+
 @media (max-width: 576px) {
     .review-container {
         padding: 1.25rem;
     }
     
+    .rating-category {
+        padding: 1.25rem;
+    }
+    
     .star-rating {
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
     
     .form-actions {
@@ -127,11 +200,19 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-0">
                     <div class="review-container">
-                        <div id="review-alerts"></div>
+                        <div id="review-alerts">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
                         <div class="review-header">
                             <h4>{% trans "Share Your Experience" %}</h4>
                             <p class="lead">
-                                {% if order.client == request.user %}
+                                {% if is_client %}
                                     {% blocktrans with freelancer_name=order.freelancer.get_full_name|default:order.freelancer.username order_id=order.id %}
                                         How was your experience working with {{ freelancer_name }} on Order #{{ order_id }}?
                                     {% endblocktrans %}
@@ -154,30 +235,27 @@
                                 </div>
                             {% endif %}
                             
-                            <!-- Hidden rating input -->
-                            <input type="hidden" name="rating" id="rating-value" value="{{ form.rating.value|default:'5' }}">
-                            
-                            <div class="form-group text-center">
-                                <label for="rating-value" class="rating-label">
-                                    {% trans "How would you rate this experience?" %}
-                                </label>
+                            <!-- Overall Rating -->
+                            <div class="rating-category">
+                                <h5><i class="bi bi-star-fill"></i> {% trans "Overall Rating" %}</h5>
+                                <p class="text-muted mb-3">
+                                    {% trans "How would you rate your overall experience?" %}
+                                </p>
                                 
-                                <div class="star-rating">
+                                <div class="star-rating" data-rating-type="overall">
                                     {% for i in "54321" %}
-                                        <input type="radio" id="star{{ i }}" name="rating-radio" value="{{ i }}" 
+                                        <input type="radio" id="rating_{{ forloop.revcounter }}" 
+                                               name="rating" value="{{ i }}" 
                                                {% if form.rating.value == i or forloop.first and not form.rating.value %}checked{% endif %}>
-                                        <label for="star{{ i }}" title="{{ i }} stars">
-                                            <i class="bi bi-star-fill"></i>
+                                        <label for="rating_{{ forloop.revcounter }}" 
+                                               title="{{ i }} {% if i == '1' %}{% trans 'star' %}{% else %}{% trans 'stars' %}{% endif %}">
+                                            <i class="bi {% if form.rating.value and form.rating.value >= forloop.revcounter|add:0 %}bi-star-fill{% else %}bi-star{% endif %}"></i>
                                         </label>
                                     {% endfor %}
                                 </div>
-                                
-                                <div class="mt-2">
-                                    <span id="rating-text" class="fw-bold">
-                                        {{ form.get_rating_display|default:"Excellent (5/5)" }}
-                                    </span>
+                                <div id="overall-rating-text" class="rating-text">
+                                    {{ form.get_rating_display|default:"Excellent (5/5)" }}
                                 </div>
-                                
                                 {% if form.rating.errors %}
                                     <div class="invalid-feedback d-block">
                                         {{ form.rating.errors.0 }}
@@ -185,14 +263,143 @@
                                 {% endif %}
                             </div>
                             
-                            <div class="form-group">
-                                <label for="id_comment" class="form-label">
-                                    <strong>{% trans "Your Review" %}</strong>
+                            <!-- Detailed Ratings -->
+                            <div class="rating-category">
+                                <h5><i class="bi bi-chat-square-text"></i> {% trans "Detailed Ratings" %}</h5>
+                                <p class="text-muted mb-3">
+                                    {% trans "Rate your experience in different categories" %}
+                                </p>
+                                
+                                <!-- Communication -->
+                                <div class="mb-4">
+                                    <label class="form-label d-block fw-semibold">
+                                        {{ form.communication_rating.label }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <p class="text-muted small mb-2">{{ form.communication_rating.help_text }}</p>
+                                    <div class="star-rating" data-rating-type="communication">
+                                        {% for i in "54321" %}
+                                            <input type="radio" 
+                                                   id="communication_rating_{{ forloop.revcounter }}" 
+                                                   name="communication_rating" 
+                                                   value="{{ i }}" 
+                                                   {% if form.communication_rating.value == i or forloop.first and not form.communication_rating.value %}checked{% endif %}>
+                                            <label for="communication_rating_{{ forloop.revcounter }}" 
+                                                   title="{{ i }} {% if i == '1' %}{% trans 'star' %}{% else %}{% trans 'stars' %}{% endif %}">
+                                                <i class="bi {% if form.communication_rating.value and form.communication_rating.value >= forloop.revcounter|add:0 %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                    <div id="communication-rating-text" class="rating-text">
+                                        {{ form.communication_rating.field.choices.4.1 }}
+                                    </div>
+                                    {% if form.communication_rating.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.communication_rating.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Quality of Work -->
+                                <div class="mb-4">
+                                    <label class="form-label d-block fw-semibold">
+                                        {{ form.quality_rating.label }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <p class="text-muted small mb-2">{{ form.quality_rating.help_text }}</p>
+                                    <div class="star-rating" data-rating-type="quality">
+                                        {% for i in "54321" %}
+                                            <input type="radio" 
+                                                   id="quality_rating_{{ forloop.revcounter }}" 
+                                                   name="quality_rating" 
+                                                   value="{{ i }}" 
+                                                   {% if form.quality_rating.value == i or forloop.first and not form.quality_rating.value %}checked{% endif %}>
+                                            <label for="quality_rating_{{ forloop.revcounter }}" 
+                                                   title="{{ i }} {% if i == '1' %}{% trans 'star' %}{% else %}{% trans 'stars' %}{% endif %}">
+                                                <i class="bi {% if form.quality_rating.value and form.quality_rating.value >= forloop.revcounter|add:0 %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                    <div id="quality-rating-text" class="rating-text">
+                                        {{ form.quality_rating.field.choices.4.1 }}
+                                    </div>
+                                    {% if form.quality_rating.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.quality_rating.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Meeting Deadlines -->
+                                <div class="mb-4">
+                                    <label class="form-label d-block fw-semibold">
+                                        {{ form.deadline_rating.label }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <p class="text-muted small mb-2">{{ form.deadline_rating.help_text }}</p>
+                                    <div class="star-rating" data-rating-type="deadline">
+                                        {% for i in "54321" %}
+                                            <input type="radio" 
+                                                   id="deadline_rating_{{ forloop.revcounter }}" 
+                                                   name="deadline_rating" 
+                                                   value="{{ i }}" 
+                                                   {% if form.deadline_rating.value == i or forloop.first and not form.deadline_rating.value %}checked{% endif %}>
+                                            <label for="deadline_rating_{{ forloop.revcounter }}" 
+                                                   title="{{ i }} {% if i == '1' %}{% trans 'star' %}{% else %}{% trans 'stars' %}{% endif %}">
+                                                <i class="bi {% if form.deadline_rating.value and form.deadline_rating.value >= forloop.revcounter|add:0 %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                    <div id="deadline-rating-text" class="rating-text">
+                                        {{ form.deadline_rating.field.choices.4.1 }}
+                                    </div>
+                                    {% if form.deadline_rating.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.deadline_rating.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Professionalism -->
+                                <div class="mb-3">
+                                    <label class="form-label d-block fw-semibold">
+                                        {{ form.professionalism_rating.label }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <p class="text-muted small mb-2">{{ form.professionalism_rating.help_text }}</p>
+                                    <div class="star-rating" data-rating-type="professionalism">
+                                        {% for i in "54321" %}
+                                            <input type="radio" 
+                                                   id="professionalism_rating_{{ forloop.revcounter }}" 
+                                                   name="professionalism_rating" 
+                                                   value="{{ i }}" 
+                                                   {% if form.professionalism_rating.value == i or forloop.first and not form.professionalism_rating.value %}checked{% endif %}>
+                                            <label for="professionalism_rating_{{ forloop.revcounter }}" 
+                                                   title="{{ i }} {% if i == '1' %}{% trans 'star' %}{% else %}{% trans 'stars' %}{% endif %}">
+                                                <i class="bi {% if form.professionalism_rating.value and form.professionalism_rating.value >= forloop.revcounter|add:0 %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                    <div id="professionalism-rating-text" class="rating-text">
+                                        {{ form.professionalism_rating.field.choices.4.1 }}
+                                    </div>
+                                    {% if form.professionalism_rating.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.professionalism_rating.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Review Comment -->
+                            <div class="mb-4">
+                                <label for="id_comment" class="form-label fw-semibold">
+                                    {{ form.comment.label }}
                                     <span class="text-muted">({% trans "Optional" %})</span>
                                 </label>
                                 {{ form.comment }}
                                 {% if form.comment.help_text %}
-                                    <div class="help-text">{{ form.comment.help_text }}</div>
+                                    <div class="form-text">{{ form.comment.help_text }}</div>
                                 {% endif %}
                                 {% if form.comment.errors %}
                                     <div class="invalid-feedback d-block">
@@ -220,86 +427,6 @@
 {% endblock content %}
 
 {% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const ratingInput = document.getElementById('rating-value');
-        const ratingText = document.getElementById('rating-text');
-        const ratingRadios = document.querySelectorAll('input[name="rating-radio"]');
-        const reviewForm = document.getElementById('review-form');
-        const submitBtn = document.getElementById('submit-review');
-        const submitSpinner = document.getElementById('submit-spinner');
-        const reviewAlerts = document.getElementById('review-alerts');
-        
-        // Rating descriptions
-        const ratingDescriptions = {
-            '1': '{% trans "Poor (1/5)" %}',
-            '2': '{% trans "Fair (2/5)" %}',
-            '3': '{% trans "Good (3/5)" %}',
-            '4': '{% trans "Very Good (4/5)" %}',
-            '5': '{% trans "Excellent (5/5)" %}',
-        };
-        
-        // Update rating display when a star is clicked
-        ratingRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                const value = this.value;
-                ratingInput.value = value;
-                ratingText.textContent = ratingDescriptions[value];
-            });
-            
-            // Add hover effect
-            radio.addEventListener('mouseover', function() {
-                const value = this.value;
-                ratingText.textContent = ratingDescriptions[value];
-            });
-            
-            // Reset to selected value on mouseout
-            radio.addEventListener('mouseout', function() {
-                const selectedValue = document.querySelector('input[name="rating-radio"]:checked').value;
-                ratingText.textContent = ratingDescriptions[selectedValue];
-            });
-        ratingText.textContent = ratingTexts[selectedValue];
-    }
-    
-    // Initialize stars based on current value
-    updateStars(ratingInput.value);
-    
-    // Add click event to star labels
-    starLabels.forEach(label => {
-        label.addEventListener('click', (e) => {
-            const value = e.currentTarget.getAttribute('data-value');
-            updateStars(value);
-        });
-        
-        // Hover effect
-        label.addEventListener('mouseenter', (e) => {
-            const hoverValue = e.currentTarget.getAttribute('data-value');
-            starLabels.forEach(star => {
-                const value = star.getAttribute('data-value');
-                if (value <= hoverValue) {
-                    star.style.color = '#ffc107';
-                } else {
-                    star.style.color = '#e0e0e0';
-                }
-            });
-        });
-    });
-    
-    // Reset to selected state when mouse leaves the rating container
-    const starRating = document.querySelector('.star-rating');
-    starRating.addEventListener('mouseleave', () => {
-        updateStars(ratingInput.value);
-    });
-    
-    // Form validation
-    const form = document.getElementById('review-form');
-    form.addEventListener('submit', function(event) {
-        if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        form.classList.add('was-validated');
-    }, false);
-});
-</script>
-{% endblock extra_js %}
+{{ block.super }}
+<script src="{% static 'js/reviews.js' %}"></script>
+{% endblock %}

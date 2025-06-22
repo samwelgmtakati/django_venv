@@ -20,3 +20,25 @@ def profile_picture_processor(request):
             except (ValueError, AttributeError):
                 pass
     return context
+
+
+def project_counts_processor(request):
+    """
+    Context processor that adds project counts to the template context.
+    Only adds counts for authenticated clients.
+    """
+    from apps.jobs.models import Job
+    
+    context = {}
+    
+    if hasattr(request, 'user') and request.user.is_authenticated and hasattr(request.user, 'is_client') and request.user.is_client:
+        jobs = Job.objects.filter(client=request.user)
+        
+        context.update({
+            'total_projects': jobs.count(),
+            'active_projects': jobs.filter(status__in=['open', 'in_progress']).count(),
+            'completed_projects': jobs.filter(status='completed').count(),
+            'draft_projects': jobs.filter(status='draft').count(),
+        })
+    
+    return context

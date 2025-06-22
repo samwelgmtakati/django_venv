@@ -324,8 +324,8 @@ def client_dashboard(request):
     # Get the client's jobs, ordered by creation date (newest first)
     jobs = Job.objects.filter(client=request.user).order_by('-created_at')
     
-    # Count jobs by status
-    active_jobs = jobs.filter(status='open').count()  # Changed from 'in_progress' to 'open'
+    # Count jobs by status (keeping these for backward compatibility)
+    active_jobs = jobs.filter(status__in=['open', 'in_progress']).count()
     draft_jobs = jobs.filter(status='draft').count()
     completed_jobs = jobs.filter(status='completed').count()
     
@@ -394,15 +394,30 @@ def client_dashboard(request):
             'profile_picture': freelancer.freelancer_profile.profile_picture.url if hasattr(freelancer.freelancer_profile, 'profile_picture') and freelancer.freelancer_profile.profile_picture else None
         })
     
+    # Get project counts for the sidebar
+    total_projects = jobs.count()
+    active_projects = jobs.filter(status__in=['open', 'in_progress']).count()
+    completed_projects = jobs.filter(status='completed').count()
+    draft_projects = jobs.filter(status='draft').count()
+    
+    # Debug output
+    print(f"DEBUG - Project counts - Total: {total_projects}, Active: {active_projects}, Completed: {completed_projects}, Draft: {draft_projects}")
+    
     context = {
         'active_tab': 'dashboard',
+        'active_page': 'dashboard',  # For sidebar highlighting
         'jobs': jobs_data,  # Pass the prepared job data
-        'total_jobs': jobs.count(),
+        'total_jobs': total_projects,
         'active_jobs': active_jobs,
         'draft_jobs': draft_jobs,
         'completed_jobs': completed_jobs,
         'recent_proposals': recent_proposals,
         'recommended_freelancers': freelancers_data,
+        # Project counts for sidebar
+        'total_projects': total_projects,
+        'active_projects': active_projects,
+        'completed_projects': completed_projects,
+        'draft_projects': draft_projects,
     }
     return render(request, 'dashboard/client_dashboard.html', context)
 
@@ -491,6 +506,27 @@ def freelancer_dashboard(request):
         status='completed'
     ).distinct()
     
+    # Get review statistics
+    from apps.reviews.models import Review
+    
+    review_stats = Review.objects.filter(
+        user_being_reviewed=request.user
+    ).aggregate(
+        avg_rating=Avg('rating'),
+        total_reviews=Count('id'),
+        five_star=Count('id', filter=Q(rating=5)),
+        four_star=Count('id', filter=Q(rating=4)),
+        three_star=Count('id', filter=Q(rating=3)),
+        two_star=Count('id', filter=Q(rating=2)),
+        one_star=Count('id', filter=Q(rating=1))
+    )
+    
+    # Calculate percentages for each rating
+    total = review_stats['total_reviews'] or 1  # Avoid division by zero
+    for i in range(1, 6):
+        count = review_stats.get(f'{i}_star', 0)
+        review_stats[f'{i}_star_pct'] = round((count / total) * 100) if total else 0
+
     # Get recommended jobs (jobs in the same categories as freelancer's skills)
     recommended_jobs = Job.objects.filter(
         status='published'  # Using 'published' status instead of is_active
@@ -527,6 +563,7 @@ def freelancer_dashboard(request):
         'active_jobs': active_jobs.count(),
         'completed_jobs': completed_jobs.count(),
         'proposals': proposals,
+        'stats': review_stats,  # Add review statistics to the context
         'recommended_jobs': recommended_jobs,
         'skills': skills,  # Add skills to the context
     }
@@ -616,21 +653,26 @@ def post_job(request):
             logger.info(f"Setting category: {category_id}")
             job_data['category_id'] = category_id
         
-        # Use get_or_create to prevent duplicates based on title and client
-        job, created = Job.objects.get_or_create(
+        # Check for existing jobs with the same title and client
+        existing_jobs = Job.objects.filter(
             title=job_data['title'],
-            client=request.user,
-            defaults=job_data
-        )
+            client=request.user
+        ).order_by('created_at')
         
-        if not created:
-            logger.warning(f"Duplicate job detected: {job.title} for user {request.user}")
+        if existing_jobs.exists():
+            logger.warning(f"Duplicate job detected: {job_data['title']} for user {request.user}")
+            # Get the most recent job with this title
+            job = existing_jobs.first()
             # Update existing job with new data
             for key, value in job_data.items():
                 setattr(job, key, value)
             job.save()
+        else:
+            # Create new job if no duplicates found
+            job = Job.objects.create(**job_data)
         
-        logger.info(f"Job {'created' if created else 'updated'} successfully with ID: {job.id}")
+        action = 'created' if existing_jobs.exists() else 'updated'
+        logger.info(f"Job {action} successfully with ID: {job.id}")
         
         # Prepare success response
         success_message = 'Job saved as draft successfully!' if status == 'draft' else 'Job published successfully!'

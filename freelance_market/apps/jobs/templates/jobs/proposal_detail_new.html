@@ -276,7 +276,7 @@
                     <div class="card-body">
                         <div class="list-group">
                             {% for similar in similar_proposals|slice:":3" %}
-                                <a href="{% url 'jobs:proposal_detail' pk=similar.id %}" 
+                                <a href="{% url 'jobs:proposal_detail' job_slug=job_slug pk=similar.id %}" 
                                    class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h6 class="mb-1">{{ similar.freelancer.get_full_name|default:similar.freelancer.username }}</h6>

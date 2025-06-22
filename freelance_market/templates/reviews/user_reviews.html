@@ -1,0 +1,657 @@
+{% extends "dashboard/base.html" %}
+{% load i18n static review_tags %}
+
+{% block title %}{% if is_own_profile %}{% trans "My Reviews" %}{% else %}{% blocktrans with username=user_profile.get_display_name %}{{ username }}'s Reviews{% endblocktrans %}{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .review-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+    
+    .review-card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
+    }
+    
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    
+    .reviewer-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .reviewer-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 1rem;
+    }
+    
+    .reviewer-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .review-date {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    
+    .review-rating {
+        display: flex;
+        align-items: center;
+    }
+    
+    .review-rating .stars {
+        color: #ffc107;
+        font-size: 1.25rem;
+        margin-right: 0.5rem;
+    }
+    
+    .review-rating .rating-value {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .review-body {
+        padding: 1.5rem;
+    }
+    
+    .review-comment {
+        margin-bottom: 1.25rem;
+        line-height: 1.6;
+    }
+    
+    .review-response {
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        padding: 1rem 1.25rem;
+        margin-top: 1rem;
+        border-right: 3px solid #007bff;
+    }
+    
+    .response-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .review-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #f1f3f5;
+    }
+    
+    .helpful-count {
+        display: flex;
+        align-items: center;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    
+    .helpful-count i {
+        margin-right: 0.5rem;
+        color: #20c997;
+    }
+    
+    .no-reviews {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6c757d;
+    }
+    
+    .rating-summary {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .rating-summary h3 {
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+    }
+    
+    .rating-overview {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .average-rating {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-right: 1.5rem;
+        line-height: 1;
+    }
+    
+    .stars-large {
+        color: #ffc107;
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .rating-count {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .rating-bar {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .rating-label {
+        width: 80px;
+        font-weight: 500;
+    }
+    
+    .rating-progress {
+        flex-grow: 1;
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        margin: 0 1rem;
+        overflow: hidden;
+    }
+    
+    .rating-progress-bar {
+        height: 100%;
+        background-color: #ffc107;
+    }
+    
+    .rating-percent {
+        width: 40px;
+        text-align: right;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    @media (max-width: 768px) {
+        .review-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .review-rating {
+            margin-top: 1rem;
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .rating-overview {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .average-rating {
+            margin-right: 0;
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    {% if is_own_profile %}
+                        {% trans "My Reviews" %}
+                    {% else %}
+                        {% blocktrans with name=user_profile.get_display_name %}{{ name }}'s Reviews{% endblocktrans %}
+                    {% endif %}
+                </h1>
+                <div>
+                    <a href="{% url 'reviews:user_reviews' user_profile.username %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> {% trans "Back to Profile" %}
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Rating Summary -->
+            <div class="rating-summary">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center mb-4 mb-md-0">
+                            <div class="average-rating">{{ average_rating|floatformat:1 }}</div>
+                            <div class="stars-large">
+                                {% with avg_rating=average_rating|default:0 %}
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= avg_rating|floatformat:0|add:"0"|add:0 %}
+                                            <i class="bi bi-star-fill"></i>
+                                        {% elif forloop.counter|add:"-1" < avg_rating|floatformat:0|add:"0"|add:0 and avg_rating|floatformat:0|add:"0"|add:0 < forloop.counter %}
+                                            <i class="bi bi-star-half"></i>
+                                        {% else %}
+                                            <i class="bi bi-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endwith %}
+                            </div>
+                            <div class="rating-count">
+                                {% blocktrans count count=total_reviews %}
+                                    {{ count }} review
+                                {% plural %}
+                                    {{ count }} reviews
+                                {% endblocktrans %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        {% for i in "54321" %}
+                            {% with rating=i|add:0 %}
+                                {% with count=rating_distribution|get_item:rating %}
+                                    {% if count > 0 %}
+                                        {% widthratio count total_reviews 100 as percentage %}
+                                        <div class="rating-bar">
+                                            <div class="rating-label">{{ rating }} {% trans "star" %}{{ rating|pluralize }}</div>
+                                            <div class="rating-progress">
+                                                <div class="rating-progress-bar" style="width: {{ percentage }}%;"></div>
+                                            </div>
+                                            <div class="rating-percent">
+                                                {{ percentage|floatformat:0 }}%
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reviews List -->
+            <div class="reviews-list">
+                {% if page_obj %}
+                    {% for review in page_obj %}
+                        <div class="review-card">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    <img src="{{ review.reviewer.profile_picture.url|default:'/static/images/default-avatar.png' }}" 
+                                         alt="{{ review.reviewer.get_display_name }}" 
+                                         class="reviewer-avatar">
+                                    <div>
+                                        <div class="reviewer-name">
+                                            {{ review.reviewer.get_display_name }}
+                                            {% if review.is_client_review %}
+                                                <span class="badge bg-primary ms-2">{% trans "Client" %}</span>
+                                            {% else %}
+                                                <span class="badge bg-success ms-2">{% trans "Freelancer" %}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="review-date">
+                                            {{ review.created_at|date:"F j, Y" }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="review-rating">
+                                    <div class="stars">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= review.rating %}
+                                                <i class="bi bi-star-fill"></i>
+                                            {% else %}
+                                                <i class="bi bi-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <div class="rating-value">{{ review.rating|floatformat:1 }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="review-body">
+                                {% if review.comment %}
+                                    <div class="review-comment">
+                                        {{ review.comment|linebreaks }}
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Detailed Ratings -->
+                                <div class="detailed-ratings mt-3">
+                                    <h6 class="fw-semibold mb-2">{% trans "Detailed Ratings" %}</h6>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between">
+                                                <span>{% trans "Communication" %}</span>
+                                                <div>
+                                                    {% with rating=review.communication_rating %}
+                                                        {% for i in "12345" %}
+                                                            <i class="bi bi-star{% if forloop.counter <= rating %}-fill{% endif %} text-warning"></i>
+                                                        {% endfor %}
+                                                    {% endwith %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between">
+                                                <span>{% trans "Quality of Work" %}</span>
+                                                <div>
+                                                    {% with rating=review.quality_rating %}
+                                                        {% for i in "12345" %}
+                                                            <i class="bi bi-star{% if forloop.counter <= rating %}-fill{% endif %} text-warning"></i>
+                                                        {% endfor %}
+                                                    {% endwith %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between">
+                                                <span>{% trans "Meeting Deadlines" %}</span>
+                                                <div>
+                                                    {% with rating=review.deadline_rating %}
+                                                        {% for i in "12345" %}
+                                                            <i class="bi bi-star{% if forloop.counter <= rating %}-fill{% endif %} text-warning"></i>
+                                                        {% endfor %}
+                                                    {% endwith %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between">
+                                                <span>{% trans "Professionalism" %}</span>
+                                                <div>
+                                                    {% with rating=review.professionalism_rating %}
+                                                        {% for i in "12345" %}
+                                                            <i class="bi bi-star{% if forloop.counter <= rating %}-fill{% endif %} text-warning"></i>
+                                                        {% endfor %}
+                                                    {% endwith %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Review Response -->
+                                {% if review.response %}
+                                    <div class="review-response">
+                                        <span class="response-label">
+                                            {% if is_own_profile %}
+                                                {% trans "Your response" %}
+                                            {% else %}
+                                                {% trans "Response from" %} {{ review.user_being_reviewed.get_display_name }}
+                                            {% endif %}
+                                        </span>
+                                        <div class="response-text">
+                                            {{ review.response|linebreaks }}
+                                        </div>
+                                        <div class="text-end mt-2">
+                                            <small class="text-muted">{{ review.response_date|timesince }} {% trans "ago" %}</small>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Helpful Votes -->
+                                <div class="review-meta">
+                                    {% if user.is_authenticated and user != review.reviewer %}
+                                        <form action="{% url 'reviews:helpful_vote' review.id %}" method="post" class="helpful-form" data-review-id="{{ review.id }}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="is_helpful" value="true">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                <i class="bi bi-hand-thumbs-up"></i>
+                                                <span class="helpful-text">
+                                                    {% if review.user_has_voted %}
+                                                        {% trans "Helpful" %}
+                                                    {% else %}
+                                                        {% trans "Was this helpful?" %}
+                                                    {% endif %}
+                                                </span>
+                                                {% if review.helpful_votes_count > 0 %}
+                                                    <span class="badge bg-success ms-1">{{ review.helpful_votes_count }}</span>
+                                                {% endif %}
+                                            </button>
+                                        </form>
+                                    {% elif review.helpful_votes_count > 0 %}
+                                        <div class="helpful-count">
+                                            <i class="bi bi-hand-thumbs-up-fill"></i>
+                                            <span>
+                                                {% blocktrans count count=review.helpful_votes_count %}
+                                                    {{ count }} person found this helpful
+                                                {% plural %}
+                                                    {{ count }} people found this helpful
+                                                {% endblocktrans %}
+                                            </span>
+                                        </div>
+                                    {% else %}
+                                        <div class="helpful-count">
+                                            <i class="bi bi-hand-thumbs-up"></i>
+                                            <span>{% trans "Be the first to find this helpful" %}</span>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if user == review.reviewer or user == review.user_being_reviewed %}
+                                        <div class="review-actions">
+                                            {% if user == review.reviewer %}
+                                                <a href="{% url 'reviews:update' review.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-pencil"></i> {% trans "Edit" %}
+                                                </a>
+                                            {% endif %}
+                                            {% if user == review.user_being_reviewed and not review.response %}
+                                                <button type="button" class="btn btn-sm btn-outline-secondary ms-1" data-bs-toggle="modal" data-bs-target="#responseModal{{ review.id }}">
+                                                    <i class="bi bi-reply"></i> {% trans "Respond" %}
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Response Modal -->
+                        {% if user == review.user_being_reviewed and not review.response %}
+                            <div class="modal fade" id="responseModal{{ review.id }}" tabindex="-1" aria-labelledby="responseModalLabel{{ review.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="responseModalLabel{{ review.id }}">
+                                                {% trans "Respond to Review" %}
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+                                        </div>
+                                        <form action="{% url 'reviews:respond' review.id %}" method="post" class="response-form" data-review-id="{{ review.id }}">
+                                            {% csrf_token %}
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label for="response{{ review.id }}" class="form-label">
+                                                        {% trans "Your response" %}
+                                                    </label>
+                                                    <textarea class="form-control" id="response{{ review.id }}" 
+                                                              name="response" rows="4" required></textarea>
+                                                    <div class="form-text">
+                                                        {% trans "Your response will be visible to everyone who can see this review." %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                                    {% trans "Cancel" %}
+                                                </button>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                                    <span class="btn-text">{% trans "Submit Response" %}</span>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                        <nav aria-label="{% trans 'Reviews pagination' %}" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="{% trans 'Previous' %}">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link" aria-hidden="true">&laquo;</span>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for i in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                        <li class="page-item active" aria-current="page">
+                                            <span class="page-link">{{ i }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="{% trans 'Next' %}">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link" aria-hidden="true">&raquo;</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                {% else %}
+                    <div class="no-reviews">
+                        <i class="bi bi-chat-square-text display-4 text-muted mb-3"></i>
+                        <h4>{% trans "No reviews yet" %}</h4>
+                        <p class="text-muted">
+                            {% if is_own_profile %}
+                                {% trans "You don't have any reviews yet. Complete orders to receive reviews from clients or freelancers." %}
+                            {% else %}
+                                {% trans "This user doesn't have any reviews yet." %}
+                            {% endif %}
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+$(document).ready(function() {
+    // Handle helpful votes
+    $('.helpful-form').on('submit', function(e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $button = $form.find('button[type="submit"]');
+        const $helpfulText = $form.find('.helpful-text');
+        const $helpfulCount = $form.find('.badge');
+        const reviewId = $form.data('review-id');
+        
+        // Disable button to prevent multiple submissions
+        $button.prop('disabled', true);
+        
+        $.ajax({
+            type: 'POST',
+            url: $form.attr('action'),
+            data: $form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    // Update button text
+                    $helpfulText.text('{% trans "Helpful" %}');
+                    
+                    // Update count
+                    const newCount = response.helpful_votes_count;
+                    if (newCount > 0) {
+                        if ($helpfulCount.length) {
+                            $helpfulCount.text(newCount);
+                        } else {
+                            $button.append(`<span class="badge bg-success ms-1">${newCount}</span>`);
+                        }
+                    }
+                    
+                    // Update button style
+                    $button.removeClass('btn-outline-success').addClass('btn-success');
+                }
+            },
+            error: function(xhr) {
+                console.error('Error submitting helpful vote:', xhr);
+                // Re-enable button on error
+                $button.prop('disabled', false);
+            }
+        });
+    });
+    
+    // Handle review responses
+    $('.response-form').on('submit', function(e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $button = $form.find('button[type="submit"]');
+        const $spinner = $button.find('.spinner-border');
+        const $buttonText = $button.find('.btn-text');
+        const reviewId = $form.data('review-id');
+        
+        // Show loading state
+        $button.prop('disabled', true);
+        $spinner.removeClass('d-none');
+        $buttonText.text('{% trans "Submitting..." %}');
+        
+        $.ajax({
+            type: 'POST',
+            url: $form.attr('action'),
+            data: $form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    // Close the modal
+                    $(`#responseModal${reviewId}`).modal('hide');
+                    
+                    // Reload the page to show the new response
+                    window.location.reload();
+                } else {
+                    // Show error message
+                    alert('{% trans "An error occurred while submitting your response. Please try again." %}');
+                    $button.prop('disabled', false);
+                    $spinner.addClass('d-none');
+                    $buttonText.text('{% trans "Submit Response" %}');
+                }
+            },
+            error: function(xhr) {
+                console.error('Error submitting response:', xhr);
+                alert('{% trans "An error occurred while submitting your response. Please try again." %}');
+                $button.prop('disabled', false);
+                $spinner.addClass('d-none');
+                $buttonText.text('{% trans "Submit Response" %}');
+            }
+        });
+    });
+    
+    // Reset form when modal is closed
+    $('.modal').on('hidden.bs.modal', function () {
+        const $form = $(this).find('form');
+        $form.trigger('reset');
+        $form.find('.is-invalid').removeClass('is-invalid');
+        $form.find('.invalid-feedback').remove();
+    });
+});
+</script>
+{% endblock %}

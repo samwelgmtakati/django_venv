@@ -1,4 +1,4 @@
-{% extends "dashboard/base.html" %}
+{% extends "dashboard/base_dashboard.html" %}
 {% load static %}
 {% load humanize %}
 
@@ -9,6 +9,7 @@
 {% endblock extra_css %}
 
 {% block content %}
+<!-- DEBUG: total_projects={{ total_projects|default:'None' }}, active_projects={{ active_projects|default:'None' }}, completed_projects={{ completed_projects|default:'None' }}, draft_projects={{ draft_projects|default:'None' }} -->
 <div class="client-dashboard">
     <div class="container-fluid">
         <!-- Page Header -->

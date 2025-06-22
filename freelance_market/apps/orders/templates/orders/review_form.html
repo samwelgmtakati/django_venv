@@ -1,56 +1,232 @@
 {% extends "dashboard/base.html" %}
-{% block title %}Leave Review{% endblock %}
+{% block title %}Leave Review{% endblock title %}
+
 {% block content %}
-<h2>Leave a Review for Order #{{ order.id }}</h2>
-<form method="post">
-  {% csrf_token %}
-  <style>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Leave a Review for Order #{{ order.id }}</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'orders:review' order.id %}">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Overall Rating -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Overall Rating *</label>
+                            {{ form.rating }}
+                            <div class="star-rating">
+                                {% for i in "54321" %}
+                                    <input type="radio" id="star{{ i }}" name="rating_display" value="{{ i }}" 
+                                           {% if form.rating.value == i or form.rating.value|stringformat:'s' == i %}checked{% endif %}>
+                                    <label for="star{{ i }}" class="bi bi-star-fill"></label>
+                                {% endfor %}
+                                {% if form.rating.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.rating.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const hiddenInput = document.getElementById('{{ form.rating.id_for_label }}');
+                            const radioInputs = document.querySelectorAll('input[type="radio"][name="rating_display"]');
+                            
+                            radioInputs.forEach(radio => {
+                                radio.addEventListener('change', function() {
+                                    hiddenInput.value = this.value;
+                                });
+                            });
+                            
+                            // Initialize with existing value if any
+                            if (hiddenInput.value) {
+                                const selectedRadio = document.querySelector(`input[type="radio"][name="rating_display"][value="${hiddenInput.value}"]`);
+                                if (selectedRadio) {
+                                    selectedRadio.checked = true;
+                                }
+                            }
+                        });
+                        </script>
+                        
+                        <!-- Detailed Ratings -->
+                        {% if reviewing_freelancer %}
+                            <!-- Freelancer-specific ratings -->
+                            <div class="mb-4">
+                                <h5>Detailed Ratings (Optional)</h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Quality of Work</label>
+                                    <select name="quality_rating" class="form-select">
+                                        <option value="">Select rating...</option>
+                                        {% for value, label in form.fields.quality_rating.choices %}
+                                            <option value="{{ value }}" {% if form.quality_rating.value == value|stringformat:'s' %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Communication</label>
+                                    <select name="communication_rating" class="form-select">
+                                        <option value="">Select rating...</option>
+                                        {% for value, label in form.fields.communication_rating.choices %}
+                                            <option value="{{ value }}" {% if form.communication_rating.value == value|stringformat:'s' %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Meeting Deadlines</label>
+                                    <select name="deadline_rating" class="form-select">
+                                        <option value="">Select rating...</option>
+                                        {% for value, label in form.fields.deadline_rating.choices %}
+                                            <option value="{{ value }}" {% if form.deadline_rating.value == value|stringformat:'s' %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Professionalism</label>
+                                    <select name="professionalism_rating" class="form-select">
+                                        <option value="">Select rating...</option>
+                                        {% for value, label in form.fields.professionalism_rating.choices %}
+                                            <option value="{{ value }}" {% if form.professionalism_rating.value == value|stringformat:'s' %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        {% else %}
+                            <!-- Client-specific ratings -->
+                            <div class="mb-4">
+                                <h5>Detailed Ratings (Optional)</h5>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Clarity of Requirements</label>
+                                    <select name="clarity_rating" class="form-select">
+                                        <option value="">Select rating...</option>
+                                        {% for value, label in form.fields.clarity_rating.choices %}
+                                            <option value="{{ value }}" {% if form.clarity_rating.value == value|stringformat:'s' %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Responsiveness</label>
+                                    <select name="responsiveness_rating" class="form-select">
+                                        <option value="">Select rating...</option>
+                                        {% for value, label in form.fields.responsiveness_rating.choices %}
+                                            <option value="{{ value }}" {% if form.responsiveness_rating.value == value|stringformat:'s' %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Timely Payment</label>
+                                    <select name="payment_rating" class="form-select">
+                                        <option value="">Select rating...</option>
+                                        {% for value, label in form.fields.payment_rating.choices %}
+                                            <option value="{{ value }}" {% if form.payment_rating.value == value|stringformat:'s' %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Comment -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Your Review</label>
+                            {{ form.comment }}
+                            {% if form.comment.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.comment.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Share your experience working with this user (optional)</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'orders:detail' order.id %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Back to Order
+                            </a>
+                            <button type="submit" class="btn btn-primary" name="submit_review">
+                                <i class="bi bi-star-fill me-1"></i> Submit Review
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
 .star-rating {
-  direction: rtl;
-  font-size: 1.75rem;
-  unicode-bidi: bidi-override;
-  display: inline-block;
+    direction: rtl;
+    unicode-bidi: bidi-override;
+    display: inline-block;
+    font-size: 1.75rem;
+    line-height: 1;
+    padding: 0;
+    margin: 0 0 1rem 0;
 }
-.star-rating input[type="radio"] {
-  display: none;
+
+.star-rating input {
+    display: none;
 }
+
 .star-rating label {
-  color: #d3d3d3; /* Light grey by default */
-  cursor: pointer;
-  transition: color 0.2s ease;
-  padding: 0 2px;
+    color: #d3d3d3;
+    cursor: pointer;
+    float: right;
+    padding: 0 5px;
+    margin: 0;
+    transition: color 0.2s;
 }
-/* Hover effect - color stars on hover */
+
 .star-rating label:hover,
-.star-rating label:hover ~ label {
-  color: #ffc107; /* Yellow on hover */
+.star-rating label:hover ~ label,
+.star-rating input:checked ~ label {
+    color: #ffc107;
 }
-/* Selected stars - keep colored after selection */
-.star-rating input[type="radio"]:checked ~ label {
-  color: #ffc107; /* Yellow for selected and all previous stars */
+
+.star-rating input:checked ~ label:hover,
+.star-rating input:checked ~ label:hover ~ label {
+    color: #ffd700;
 }
-/* Reset stars after the selected one */
-.star-rating input[type="radio"]:checked + label ~ label {
-  color: #d3d3d3; /* Grey for stars after the selected one */
+
+/* Style for select dropdowns */
+.form-select {
+    max-width: 300px;
 }
-/* Keep hover effect working after selection */
-.star-rating:hover input[type="radio"]:checked ~ label {
-  color: #ffc107; /* Keep all stars yellow when hovering after selection */
+
+/* Make the comment textarea larger */
+textarea.form-control {
+    min-height: 120px;
 }
 </style>
-<div class="mb-3">
-  <label class="form-label d-block">Rating</label>
-  <div class="star-rating">
-    {% for i in "54321" %}
-      <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}">
-      <label for="star{{ i }}" class="bi bi-star-fill"></label>
-    {% endfor %}
-  </div>
-</div>
-  <div class="mb-3">
-    <label class="form-label">Comment (optional)</label>
-    {{ form.comment }}
-  </div>
-  <button type="submit" class="btn btn-primary">Submit Review</button>
-</form>
-{% endblock %}
+{% endblock content %}

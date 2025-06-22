@@ -1,0 +1,26 @@
+{% load i18n %}
+
+<div class="star-rating" data-rating-id="{{ field.name }}">
+    {% for i in "54321" %}
+        <input type="radio" 
+               id="{{ field.name }}_{{ forloop.counter }}" 
+               name="{{ field.name }}" 
+               value="{{ i }}" 
+               {% if field.value == i|add:0 %}checked{% endif %}
+               class="d-none"
+               {% if not field.field.required and not field.value and forloop.first %}checked{% endif %}>
+        <label for="{{ field.name }}_{{ forloop.counter }}" 
+               class="star-label" 
+               title="{{ i }} {% if i == '1' %}{% trans 'star' %}{% else %}{% trans 'stars' %}{% endif %}">
+            <i class="bi {% if field.value and field.value >= forloop.revcounter|add:0 %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+        </label>
+    {% endfor %}
+    {% if field.help_text %}
+        <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+    {% endif %}
+    {% if field.errors %}
+        <div class="invalid-feedback d-block">
+            {{ field.errors.0 }}
+        </div>
+    {% endif %}
+</div>

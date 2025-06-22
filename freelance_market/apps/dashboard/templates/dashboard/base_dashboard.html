@@ -15,6 +15,8 @@
     <!-- Custom CSS -->
     <link href="{% static 'dashboard/css/dashboard.css' %}" rel="stylesheet">
     <link href="{% static 'dashboard/css/sidebar.css' %}" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
     <!-- Debug Info -->
     {% if debug %}
@@ -79,6 +81,49 @@
                 <a href="{% url 'dashboard:client_proposals' %}" class="list-group-item list-group-item-action {% if active_page == 'proposals' %}active{% endif %}">
                     <i class="fas fa-file-alt me-2"></i>Proposals
                 </a>
+                
+                <!-- My Projects Section -->
+                <div class="sidebar-section">
+                    <span class="sidebar-section-title">My Projects</span>
+                    <ul class="nav nav-pills flex-column">
+                        <li class="nav-item {% if active_page == 'all_projects' %}active{% endif %}">
+                            <a href="{% url 'dashboard:my_projects' %}" class="nav-link">
+                                <i class="bi bi-folder2-open me-2"></i>
+                                <span>All Projects</span>
+                                {% if total_projects is not None %}
+                                <span class="badge bg-primary rounded-pill ms-auto">{{ total_projects }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li class="nav-item {% if active_page == 'active_projects' %}active{% endif %}">
+                            <a href="{% url 'dashboard:active_projects' %}" class="nav-link">
+                                <i class="bi bi-lightning-charge me-2"></i>
+                                <span>Active</span>
+                                {% if active_projects is not None %}
+                                <span class="badge bg-success rounded-pill ms-auto">{{ active_projects }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li class="nav-item {% if active_page == 'completed_projects' %}active{% endif %}">
+                            <a href="{% url 'dashboard:completed_projects' %}" class="nav-link">
+                                <i class="bi bi-check-circle me-2"></i>
+                                <span>Completed</span>
+                                {% if completed_projects is not None %}
+                                <span class="badge bg-secondary rounded-pill ms-auto">{{ completed_projects }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li class="nav-item {% if active_page == 'draft_projects' %}active{% endif %}">
+                            <a href="{% url 'dashboard:draft_projects' %}" class="nav-link">
+                                <i class="bi bi-file-earmark me-2"></i>
+                                <span>Drafts</span>
+                                {% if draft_projects is not None %}
+                                <span class="badge bg-warning rounded-pill ms-auto">{{ draft_projects }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
                 {% endif %}
                 
                 {% if user.is_freelancer %}

@@ -237,6 +237,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.dashboard.context_processors.profile_picture_processor',
+                'apps.dashboard.context_processors.project_counts_processor',
                 'apps.messagesys.context_processors.unread_messages_count',
             ],
         },

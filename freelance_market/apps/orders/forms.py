@@ -52,31 +52,189 @@ class OrderDeliveryForm(forms.ModelForm):
 
 
 class OrderReviewForm(forms.ModelForm):
-    """Form for submitting order reviews."""
-    class Meta:
-        from apps.orders.models import OrderReview
-        model = OrderReview
-        fields = ["rating", "comment"]
-        widgets = {
-            "rating": forms.NumberInput(attrs={
-                "min": 1, 
-                "max": 5, 
-                "class": "form-control",
-                "required": True
-            }),
-            "comment": forms.Textarea(attrs={
-                "rows": 3, 
-                "class": "form-control", 
-                "placeholder": "Leave a comment (optional)",
-                "required": False
-            }),
-        }
+    """Form for submitting order reviews.
     
-    def clean_rating(self):
-        rating = self.cleaned_data.get('rating')
-        if rating is not None and (rating < 1 or rating > 5):
-            raise ValidationError("Rating must be between 1 and 5")
-        return rating
+    This form is used by both clients and freelancers to review each other.
+    The fields shown will vary based on who is being reviewed.
+    """
+    RATING_CHOICES = [
+        (5, 'Excellent'),
+        (4, 'Very Good'),
+        (3, 'Good'),
+        (2, 'Fair'),
+        (1, 'Poor'),
+    ]
+    
+    # Common fields
+    comment = forms.CharField(
+        label=_("Your Review"),
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 4,
+            'placeholder': _('Share your experience working with this user...')
+        }),
+        required=False
+    )
+    
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        self.order = kwargs.pop('order', None)
+        super().__init__(*args, **kwargs)
+        
+        if not self.user or not self.order:
+            raise ValueError("Both 'user' and 'order' must be provided")
+            
+        # Determine if we're reviewing a freelancer or client
+        self.reviewing_freelancer = (self.user == self.order.client)
+        
+        # Add the main rating field (required)
+        self.fields['rating'] = forms.ChoiceField(
+            label=_('Overall Rating'),
+            choices=[('', _('Select rating...'))] + [(str(i), str(i)) for i in range(1, 6)],
+            widget=forms.HiddenInput(attrs={'required': 'required'}),
+            required=True,
+            error_messages={
+                'required': _('Please select a rating'),
+            }
+        )
+        
+        # Add appropriate rating fields based on who is being reviewed
+        if self.reviewing_freelancer:
+            self._add_freelancer_rating_fields()
+        else:
+            self._add_client_rating_fields()
+    
+    def _add_freelancer_rating_fields(self):
+        """Add rating fields specific to freelancer reviews."""
+        # Overall rating (required)
+        self.fields['rating'] = forms.ChoiceField(
+            label=_('Overall Rating'),
+            choices=self.RATING_CHOICES,
+            widget=forms.Select(attrs={'class': 'form-select'}),
+            required=True
+        )
+        
+        # Detailed ratings (optional)
+        self.fields['quality_rating'] = forms.ChoiceField(
+            label=_('Quality of Work'),
+            choices=self.RATING_CHOICES,
+            widget=forms.Select(attrs={'class': 'form-select'}),
+            required=False
+        )
+        self.fields['communication_rating'] = forms.ChoiceField(
+            label=_('Communication'),
+            choices=self.RATING_CHOICES,
+            widget=forms.Select(attrs={'class': 'form-select'}),
+            required=False
+        )
+        self.fields['deadline_rating'] = forms.ChoiceField(
+            label=_('Meeting Deadlines'),
+            choices=self.RATING_CHOICES,
+            widget=forms.Select(attrs={'class': 'form-select'}),
+            required=False
+        )
+        self.fields['professionalism_rating'] = forms.ChoiceField(
+            label=_('Professionalism'),
+            choices=self.RATING_CHOICES,
+            widget=forms.Select(attrs={'class': 'form-select'}),
+            required=False
+        )
+    
+    def _add_client_rating_fields(self):
+        """Add rating fields specific to client reviews."""
+        # Overall rating (required)
+        self.fields['rating'] = forms.ChoiceField(
+            label=_('Overall Rating'),
+            choices=self.RATING_CHOICES,
+            widget=forms.Select(attrs={'class': 'form-select'}),
+            required=True
+        )
+        
+        # Detailed ratings (optional)
+        self.fields['clarity_rating'] = forms.ChoiceField(
+            label=_('Clarity of Requirements'),
+            choices=self.RATING_CHOICES,
+            widget=forms.Select(attrs={'class': 'form-select'}),
+            required=False
+        )
+        self.fields['responsiveness_rating'] = forms.ChoiceField(
+            label=_('Responsiveness'),
+            choices=self.RATING_CHOICES,
+            widget=forms.Select(attrs={'class': 'form-select'}),
+            required=False
+        )
+        self.fields['payment_rating'] = forms.ChoiceField(
+            label=_('Timely Payment'),
+            choices=self.RATING_CHOICES,
+            widget=forms.Select(attrs={'class': 'form-select'}),
+            required=False
+        )
+    
+    class Meta:
+        from apps.reviews.models import Review
+        model = Review
+        fields = []  # All fields are added dynamically in __init__
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Ensure rating is provided and valid
+        rating = cleaned_data.get('rating')
+        if not rating:
+            self.add_error('rating', _('Please select a rating'))
+        else:
+            try:
+                # Convert to int and validate range
+                rating_int = int(rating)
+                if not 1 <= rating_int <= 5:
+                    self.add_error('rating', _('Rating must be between 1 and 5'))
+                cleaned_data['rating'] = rating_int
+            except (ValueError, TypeError):
+                self.add_error('rating', _('Invalid rating value'))
+        
+        # Convert other rating fields to integers if provided
+        for field in self.fields:
+            if field != 'rating' and field.endswith('_rating') and field in cleaned_data and cleaned_data[field]:
+                try:
+                    cleaned_data[field] = int(cleaned_data[field])
+                except (ValueError, TypeError):
+                    # If conversion fails, just keep the original value
+                    pass
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        review = super().save(commit=False)
+        # Set the reviewer and reviewed user
+        review.reviewer = self.user
+        review.order = self.order  # Make sure to set the order
+        review.user_being_reviewed = self.order.freelancer if self.reviewing_freelancer else self.order.client
+        review.is_client_review = self.reviewing_freelancer
+        
+        # Set the overall rating (should be validated by clean())
+        review.rating = self.cleaned_data['rating']
+        
+        # Set detailed ratings if provided
+        rating_fields = [
+            'quality_rating', 'communication_rating', 'deadline_rating', 
+            'professionalism_rating', 'clarity_rating', 'responsiveness_rating', 'payment_rating'
+        ]
+        
+        for field in rating_fields:
+            if field in self.cleaned_data and self.cleaned_data[field]:
+                try:
+                    setattr(review, field, int(self.cleaned_data[field]))
+                except (ValueError, TypeError):
+                    # Skip invalid values
+                    pass
+        
+        if commit:
+            review.save()
+            # Update the user's average rating
+            from apps.reviews.models import update_user_rating
+            update_user_rating(review.user_being_reviewed)
+        
+        return review
 
 
 class OrderRevisionForm(forms.Form):

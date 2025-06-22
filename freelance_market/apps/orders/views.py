@@ -14,8 +14,10 @@ from django.http import HttpResponseForbidden, JsonResponse, Http404, HttpRespon
 from django.forms import ValidationError
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import logging
 
 from apps.jobs.models import Order, OrderDelivery
+from apps.reviews.models import Review
 from .forms import OrderDeliveryForm, OrderReviewForm, OrderRevisionForm
 
 
@@ -141,10 +143,13 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
         order = self.object
         user = self.request.user
         
-        # Get reviews
-        from apps.reviews.models import Review
-        reviews = Review.objects.filter(order=order).select_related('reviewer')
-        has_reviewed = reviews.filter(reviewer=user).exists()
+        # Get reviews with user info
+        reviews = order.reviews.select_related('reviewer').order_by('-created_at')
+        
+        # Check if current user has reviewed
+        user_has_reviewed = False
+        if user.is_authenticated:
+            user_has_reviewed = reviews.filter(reviewer=user).exists()
         
         # Check permissions
         can_deliver = (
@@ -164,7 +169,7 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
         
         can_review = (
             order.status in [Order.STATUS_APPROVED, Order.STATUS_COMPLETED] and 
-            not has_reviewed and
+            not user_has_reviewed and
             user in [order.client, order.freelancer]
         )
         
@@ -174,8 +179,9 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
             'can_approve': can_approve,
             'can_request_revision': can_request_revision,
             'can_review': can_review,
-            'has_reviewed': has_reviewed,
+            'user_has_reviewed': user_has_reviewed,
             'reviews': reviews,
+            'deliveries': order.deliveries.all().order_by('-uploaded_at'),
             'active_page': 'orders',
             'can_be_reviewed': order.status in [Order.STATUS_APPROVED, Order.STATUS_COMPLETED],
             'is_client': user == order.client,
@@ -359,26 +365,113 @@ class PaymentActionView(LoginRequiredMixin, View):
 
 
 class OrderReviewCreateView(LoginRequiredMixin, FormView):
-    """Client leaves rating & comment after order is approved."""
+    """View for leaving a review after order is approved.
+    
+    Both clients and freelancers can leave reviews for each other.
+    """
     form_class = OrderReviewForm
     template_name = "orders/review_form.html"
 
     def dispatch(self, request, *args, **kwargs):
         self.order = get_object_or_404(Order, pk=kwargs["pk"])
-        if request.user != self.order.client or self.order.status != Order.STATUS_APPROVED or hasattr(self.order, 'review'):
-            return HttpResponseForbidden()
+        self.user = request.user
+        
+        # Check if user is part of this order
+        if self.user not in [self.order.client, self.order.freelancer]:
+            return HttpResponseForbidden("Only participants of this order can leave a review.")
+        
+        # Check if order is approved
+        if self.order.status != Order.STATUS_APPROVED:
+            return HttpResponseForbidden(
+                f"Reviews can only be left for approved orders. Current status: {self.order.get_status_display()}"
+            )
+        
+        # Check if user has already reviewed this order
+        existing_review = Review.objects.filter(
+            order=self.order,
+            reviewer=self.user
+        ).first()
+        
+        if existing_review:
+            return HttpResponseForbidden("You have already submitted a review for this order.")
+            
         return super().dispatch(request, *args, **kwargs)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.user
+        kwargs['order'] = self.order
+        return kwargs
+
     def form_valid(self, form):
-        review = form.save(commit=False)
-        review.order = self.order
-        review.client = self.order.client
-        review.freelancer = self.order.freelancer
-        review.save()
-        return redirect("orders:detail", pk=self.order.pk)
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Form is valid, processing review submission...")
+        
+        # Debug form data
+        logger.info(f"Form data: {form.cleaned_data}")
+        
+        # Check again for existing review to prevent race conditions
+        if Review.objects.filter(order=self.order, reviewer=self.user).exists():
+            logger.warning(f"User {self.user} already has a review for order {self.order.id}")
+            messages.warning(self.request, "You have already submitted a review for this order.")
+            return redirect("orders:detail", pk=self.order.pk)
+            
+        try:
+            review = form.save(commit=False)
+            review.order = self.order
+            review.reviewer = self.user
+            
+            # Set the user being reviewed (the other party in the order)
+            if self.user == self.order.client:
+                review.user_being_reviewed = self.order.freelancer
+                review.is_client_review = True
+                logger.info(f"Client review from {self.user} for freelancer {self.order.freelancer}")
+            else:
+                review.user_being_reviewed = self.order.client
+                review.is_client_review = False
+                logger.info(f"Freelancer review from {self.user} for client {self.order.client}")
+            
+            # Save the review
+            review.save()
+            logger.info(f"Review saved with ID {review.id}")
+            
+            # Update the user's rating
+            from apps.reviews.models import update_user_rating
+            update_user_rating(review.user_being_reviewed)
+            logger.info(f"Updated rating for user {review.user_being_reviewed}")
+            
+            messages.success(self.request, "Thank you for your review!")
+            
+            # Ensure we're redirecting to the order detail page
+            redirect_url = reverse("orders:detail", kwargs={"pk": self.order.pk})
+            logger.info(f"Redirecting to {redirect_url}")
+            return redirect(redirect_url)
+            
+        except Exception as e:
+            logger.error(f"Error saving review: {str(e)}", exc_info=True)
+            messages.error(self.request, f"An error occurred: {str(e)}")
+            return self.form_invalid(form)
+    
+    def form_invalid(self, form):
+        logger = logging.getLogger(__name__)
+        logger.warning("Form is invalid")
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"{field}: {error}")
+        return self.render_to_response(self.get_context_data(form=form))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["order"] = self.order
+        
+        # Add information about who is being reviewed
+        if self.user == self.order.client:
+            context["reviewing_freelancer"] = True
+            context["user_being_reviewed"] = self.order.freelancer
+        else:
+            context["reviewing_freelancer"] = False
+            context["user_being_reviewed"] = self.order.client
+            
         return context
 
