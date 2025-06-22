@@ -29,6 +29,7 @@ urlpatterns = [
     
     # Job detail and actions - Keep slug patterns after the status views
     path('<slug:slug>/', views.JobDetailView.as_view(), name='job_detail'),
+    path('<slug:slug>/modal/', views.JobDetailModalView.as_view(), name='job_detail_modal'),
     path('<slug:slug>/update/', views.JobUpdateView.as_view(), name='job_update'),
     path('<slug:slug>/delete/', login_required(views.JobDeleteView.as_view()), name='job_delete'),
     path('<slug:slug>/publish/', login_required(views.job_publish), name='job_publish'),

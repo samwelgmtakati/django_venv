@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
-from apps.dashboard import views as dashboard_views
+from apps.dashboard.views.views import register as register_view
 from apps.jobs.views_debug import debug_template_loading
 
 urlpatterns = [
@@ -22,7 +22,7 @@ urlpatterns = [
         next_page='dashboard:home'
     ), name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(next_page='home:home_page'), name='logout'),
-    path('accounts/register/', dashboard_views.register, name='register'),
+    path('accounts/register/', register_view, name='register'),
     path('accounts/password_change/', auth_views.PasswordChangeView.as_view(
         template_name='registration/password_change.html'
     ), name='password_change'),

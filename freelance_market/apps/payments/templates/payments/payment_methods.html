@@ -1,0 +1,112 @@
+{% extends 'payments/base.html' %}
+{% load humanize %}
+
+{% block title %}Payment Methods - Payments{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0">Payment Methods</h2>
+        <a href="{% url 'payments:add_payment_method' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Add Payment Method
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            {% if payment_methods %}
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Details</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for method in payment_methods %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    {% if method.name == 'azampesa' %}
+                                                        <i class="bi bi-phone text-primary" style="font-size: 1.5rem;"></i>
+                                                    {% elif method.name == 'mpesa' %}
+                                                        <i class="bi bi-phone text-success" style="font-size: 1.5rem;"></i>
+                                                    {% elif method.name == 'bank' %}
+                                                        <i class="bi bi-bank2 text-info" style="font-size: 1.5rem;"></i>
+                                                    {% else %}
+                                                        <i class="bi bi-credit-card text-secondary" style="font-size: 1.5rem;"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ method.get_name_display }}</h6>
+                                                    <small class="text-muted">
+                                                        {% if method.is_primary %}
+                                                            <span class="badge bg-success">Primary</span>
+                                                        {% else %}
+                                                            <a href="{% url 'payments:set_primary_payment_method' method.id %}" class="text-primary">
+                                                                Set as primary
+                                                            </a>
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if method.name == 'bank' %}
+                                                <div>{{ method.bank_name }}</div>
+                                                <div class="text-muted small">
+                                                    {{ method.account_name }} ••••{{ method.account_number|slice:'-4:' }}
+                                                </div>
+                                            {% else %}
+                                                <div>{{ method.phone_number|default:method.account_name }}</div>
+                                                <div class="text-muted small">{{ method.get_name_display }} Account</div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if method.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="btn-group">
+                                                <a href="{% url 'payments:edit_payment_method' method.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <a href="{% url 'payments:delete_payment_method' method.id %}" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-credit-card text-muted" style="font-size: 3rem; opacity: 0.5;"></i>
+                        </div>
+                        <h5 class="text-muted mb-3">No payment methods found</h5>
+                        <p class="text-muted mb-4">Add a payment method to start receiving payments or making withdrawals.</p>
+                        <a href="{% url 'payments:add_payment_method' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>Add Payment Method
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

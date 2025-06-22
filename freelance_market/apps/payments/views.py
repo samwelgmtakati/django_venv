@@ -1,6 +1,7 @@
 import logging
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404, HttpResponseRedirect
+from django.http import Http404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.generic import ListView, CreateView, DetailView, TemplateView, FormView, View, UpdateView, DeleteView
@@ -162,15 +163,54 @@ class PaymentMethodDeleteView(DeleteView):
     template_name = 'payments/paymentmethod_confirm_delete.html'
     
     def get_queryset(self):
+        """Only allow users to delete their own payment methods"""
         return PaymentMethod.objects.filter(user=self.request.user)
     
+    def get_object(self, queryset=None):
+        """Handle non-existent payment methods gracefully"""
+        try:
+            return super().get_object(queryset)
+        except Http404:
+            messages.error(
+                self.request,
+                'The payment method you are trying to delete does not exist or has already been deleted.'
+            )
+            # Instead of raising 404, redirect to payment methods list
+            return None
+    
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests: redirect to payment methods if payment method not found"""
+        self.object = self.get_object()
+        if self.object is None:
+            return redirect('payments:payment_methods')
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+    
     def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Payment method deleted successfully.')
-        return super().delete(request, *args, **kwargs)
+        """Handle the deletion of a payment method"""
+        try:
+            payment_method = self.get_object()
+            payment_method_name = payment_method.get_name_display()
+            payment_method.delete()
+            messages.success(
+                request, 
+                f'Successfully deleted {payment_method_name} payment method.'
+            )
+            return HttpResponseRedirect(self.get_success_url())
+        except Exception as e:
+            logger.error(f"Error deleting payment method: {str(e)}")
+            messages.error(
+                request,
+                'An error occurred while deleting the payment method. Please try again.'
+            )
+            return HttpResponseRedirect(reverse('payments:payment_methods'))
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['active_page'] = 'payment_methods'
+        context.update({
+            'active_page': 'payment_methods',
+            'cancel_url': reverse('payments:payment_methods')
+        })
         return context
 
 

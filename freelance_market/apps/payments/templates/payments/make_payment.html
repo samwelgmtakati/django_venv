@@ -1,0 +1,253 @@
+{% extends 'payments/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Make a Payment{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">Make a Payment</h4>
+                </div>
+                <div class="card-body">
+                    {% if not payment_methods %}
+                        <div class="alert alert-warning">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <div>
+                                    <h5 class="alert-heading">No Payment Methods</h5>
+                                    <p class="mb-0">You need to add a payment method before making a payment.</p>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <a href="{% url 'payments:add_payment_method' %}?next={% url 'payments:make_payment' %}" 
+                                   class="btn btn-warning">
+                                    <i class="bi bi-credit-card me-2"></i>Add Payment Method
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <form method="post" id="payment-form">
+                            {% csrf_token %}
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Payment Details</h5>
+                                            <hr>
+                                            {{ form.amount|as_crispy_field }}
+                                            {{ form.description|as_crispy_field }}
+                                            {{ form.reference|as_crispy_field }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Payment Method</h5>
+                                            <hr>
+                                            {% for method in payment_methods %}
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="radio" 
+                                                           name="payment_method" id="method-{{ method.id }}" 
+                                                           value="{{ method.id }}" 
+                                                           {% if forloop.first %}checked{% endif %}>
+                                                    <label class="form-check-label w-100" for="method-{{ method.id }}">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <strong>{{ method.get_name_display }}</strong>
+                                                                {% if method.is_primary %}
+                                                                    <span class="badge bg-success ms-2">Primary</span>
+                                                                {% endif %}
+                                                                <div class="text-muted small">
+                                                                    {% if method.name == 'bank' %}
+                                                                        {{ method.bank_name }} ••••{{ method.account_number|slice:'-4:' }}
+                                                                    {% else %}
+                                                                        {{ method.phone_number|default:method.account_name }}
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                            <i class="bi bi-check-circle-fill text-primary" style="font-size: 1.25rem;"></i>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            {% endfor %}
+                                            <div class="mt-3">
+                                                <a href="{% url 'payments:add_payment_method' %}?next={% url 'payments:make_payment' %}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-plus-circle me-1"></i>Add New Payment Method
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-light mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Payment Summary</h5>
+                                    <hr>
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <span class="text-muted">Amount:</span>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <span id="amount-display">TZS 0.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <span class="text-muted">Transaction Fee ({{ TRANSACTION_FEE }}%):</span>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <span id="fee-display">TZS 0.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="row fw-bold">
+                                        <div class="col-6">
+                                            <span>Total Amount:</span>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <span id="total-display">TZS 0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-check mb-4">
+                                {{ form.terms|as_crispy_field }}
+                                <label class="form-check-label" for="id_terms">
+                                    I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a> and 
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
+                                </label>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'payments:dashboard' %}" class="btn btn-outline-secondary me-md-2">
+                                    <i class="bi bi-x-lg me-1"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-credit-card me-1"></i>Pay Now
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms of Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Payment Terms</h6>
+                <p>All payments are processed securely through our payment gateway. By making a payment, you agree to our terms and conditions.</p>
+                
+                <h6>2. Refund Policy</h6>
+                <p>Refunds are processed within 5-7 business days. Please contact support for any refund requests.</p>
+                
+                <h6>3. Service Fees</h6>
+                <p>A transaction fee of {{ TRANSACTION_FEE }}% is applied to all payments. This fee is non-refundable.</p>
+                
+                <h6>4. Disputes</h6>
+                <p>Any disputes regarding payments should be reported within 30 days of the transaction date.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Policy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="privacyModalLabel">Privacy Policy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Data Collection</h6>
+                <p>We collect necessary payment information to process your transaction securely.</p>
+                
+                <h6>2. Data Usage</h6>
+                <p>Your payment information is used solely for processing your transaction and is not shared with third parties.</p>
+                
+                <h6>3. Security</h6>
+                <p>All transactions are encrypted using industry-standard SSL technology.</p>
+                
+                <h6>4. Data Retention</h6>
+                <p>Payment information is retained as required by law and our financial reporting requirements.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Amount calculation
+    const amountInput = document.getElementById('id_amount');
+    const amountDisplay = document.getElementById('amount-display');
+    const feeDisplay = document.getElementById('fee-display');
+    const totalDisplay = document.getElementById('total-display');
+    const transactionFee = {{ TRANSACTION_FEE }};  // From Django context
+    
+    function formatCurrency(amount) {
+        return 'TZS ' + parseFloat(amount).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+    
+    function calculateTotals() {
+        const amount = parseFloat(amountInput.value) || 0;
+        const fee = amount * (transactionFee / 100);
+        const total = amount + fee;
+        
+        amountDisplay.textContent = formatCurrency(amount);
+        feeDisplay.textContent = formatCurrency(fee);
+        totalDisplay.textContent = formatCurrency(total);
+    }
+    
+    if (amountInput) {
+        amountInput.addEventListener('input', calculateTotals);
+        // Initial calculation
+        calculateTotals();
+    }
+    
+    // Style radio buttons for payment methods
+    const paymentMethodRadios = document.querySelectorAll('input[name="payment_method"]');
+    paymentMethodRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Remove active class from all labels
+            document.querySelectorAll('.form-check-label').forEach(label => {
+                label.closest('.form-check').classList.remove('border-primary');
+            });
+            // Add active class to selected label
+            if (this.checked) {
+                this.closest('.form-check').classList.add('border-primary');
+            }
+        });
+        // Initial check for checked radio
+        if (radio.checked) {
+            radio.closest('.form-check').classList.add('border-primary');
+        }
+    });
+});
+</script>
+{% endblock %}

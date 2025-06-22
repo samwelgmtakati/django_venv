@@ -405,6 +405,19 @@
                                         </div>
                                     </a>
                                 </li>
+                                <li>
+                                    <hr class="dropdown-divider my-1">
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center py-2"
+                                       href="{% url 'payments:add_payment_method' %}">
+                                        <i class="bi bi-credit-card me-2 text-primary"></i>
+                                        <div>
+                                            <div>Add Payment Method</div>
+                                            <small class="text-muted">Add new payment method</small>
+                                        </div>
+                                    </a>
+                                </li>
                                 {% if user.is_freelancer %}
                                     <li>
                                         <hr class="dropdown-divider my-1">

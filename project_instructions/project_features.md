@@ -130,14 +130,6 @@ team.
 - Failed payment handling and retry mechanisms
 - Automatic receipt generation (PDF/email)
 
-### 9.3 Escrow & Fund Management
-
-- Secure escrow system for order payments
-- Automatic fund release upon order completion
-- Refund processing system
-- Dispute resolution fund holding
-- Withdrawal system for freelancers (minimum TZS 10,000 threshold)
-
 ### 9.4 Financial Reporting
 
 - Earnings dashboard for freelancers
@@ -146,13 +138,6 @@ team.
 - Transaction export (CSV/Excel)
 - Monthly/quarterly financial summaries
 
-### 9.5 Compliance & Security
-
-- PCI DSS compliant payment processing
-- Data encryption for all financial transactions
-- Two-factor authentication for sensitive operations
-- Audit trail for all financial activities
-- Regular security audits and compliance checks
 
 ### 9.6 Notifications
 

@@ -16,7 +16,7 @@ from apps.accounts.models import User
 from apps.jobs.models import Job, JobCategory, JobProposal, JobProposal
 from apps.freelancer.models import Freelancer
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from .forms import CustomUserCreationForm
+from ..forms import CustomUserCreationForm
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods

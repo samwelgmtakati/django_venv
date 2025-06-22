@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, View
 from django.urls import reverse_lazy, reverse
 from django.conf import settings
 from django.db.models import Q, Count, F, Case, When, Value, IntegerField
@@ -155,6 +155,33 @@ class JobDetailView(LoginRequiredMixin, DetailView):
         # Add proposals if user is the job poster
         if context['is_owner']:
             context['proposals'] = job.proposals.select_related('freelancer').all()
+        
+        # Check if current user has already applied
+        if user.is_authenticated and user.is_freelancer:
+            context['has_applied'] = job.proposals.filter(freelancer=user).exists()
+            
+        return context
+
+class JobDetailModalView(LoginRequiredMixin, DetailView):
+    """View for displaying job details in a modal"""
+    model = Job
+    template_name = 'jobs/job_detail_modal.html'
+    context_object_name = 'job'
+    slug_field = 'slug'
+    slug_url_kwarg = 'slug'
+    
+    def get_queryset(self):
+        # Allow any authenticated user to view job details
+        return Job.objects.all()
+        
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        job = self.get_object()
+        user = self.request.user
+        
+        # Add additional context
+        context['is_owner'] = job.client == user
+        context['has_applied'] = False
         
         # Check if current user has already applied
         if user.is_authenticated and user.is_freelancer:

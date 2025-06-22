@@ -1,0 +1,102 @@
+{% extends 'payments/base.html' %}
+
+{% block title %}Payment Successful{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5 text-center">
+                    <div class="mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle" style="width: 100px; height: 100px;">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 3.5rem;"></i>
+                        </div>
+                    </div>
+                    <h2 class="h3 mb-3">Payment Successful!</h2>
+                    <p class="lead text-muted mb-4">
+                        Your payment of <strong>{{ amount|floatformat:2 }} {{ currency }}</strong> has been processed successfully.
+                    </p>
+                    
+                    <div class="card border-0 bg-light mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Transaction ID:</span>
+                                <span class="fw-medium">{{ transaction_id }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Date & Time:</span>
+                                <span class="fw-medium">{{ timestamp|date:"F j, Y H:i" }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Payment Method:</span>
+                                <span class="fw-medium">{{ payment_method }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-0">
+                                <span class="text-muted">Status:</span>
+                                <span class="badge bg-success">Completed</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-4">
+                        <a href="{% url 'payments:transactions' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-list-ul me-2"></i>View Transaction History
+                        </a>
+                        <a href="{% url 'dashboard:home' %}" class="btn btn-primary">
+                            <i class="bi bi-house-door me-2"></i>Go to Dashboard
+                        </a>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-top">
+                        <p class="small text-muted mb-0">
+                            A receipt has been sent to <strong>{{ request.user.email }}</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">What's Next?</h5>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="d-flex">
+                                <div class="me-3 text-primary">
+                                    <i class="bi bi-envelope" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Email Receipt</h6>
+                                    <p class="small text-muted mb-0">Check your email for a detailed receipt of this transaction.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex">
+                                <div class="me-3 text-primary">
+                                    <i class="bi bi-clock-history" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Processing Time</h6>
+                                    <p class="small text-muted mb-0">Most payments are processed instantly. Some may take 1-2 business days.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex">
+                                <div class="me-3 text-primary">
+                                    <i class="bi bi-headset" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Need Help?</h6>
+                                    <p class="small text-muted mb-0">Contact our support team for any questions about your payment.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

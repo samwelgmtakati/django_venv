@@ -338,6 +338,97 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Payment Settings
+PAYMENT_METHOD_CHOICES = [
+    ('azampesa', 'AzamPesa'),
+    ('mpesa', 'MPESA'),
+    ('tigopesa', 'Tigo Pesa'),
+    ('halopesa', 'HaloPesa'),
+    ('bank', 'Bank Transfer'),
+]
+
+# Minimum withdrawal amount (in TZS)
+MIN_WITHDRAWAL_AMOUNT = 10000
+
+# Default currency
+DEFAULT_CURRENCY = 'TZS'
+
+# Transaction fees (in percentage)
+TRANSACTION_FEE = 2.5  # 2.5% transaction fee
+
+# Payment Gateway Settings (to be configured in production)
+PAYMENT_GATEWAYS = {
+    'azampesa': {
+        'api_key': '',  # Set in production
+        'api_secret': '',  # Set in production
+        'merchant_id': '',  # Set in production
+    },
+    'mpesa': {
+        'consumer_key': '',  # Set in production
+        'consumer_secret': '',  # Set in production
+        'passkey': '',  # Set in production
+        'shortcode': '',  # Set in production
+    },
+}
+
+# Invoice Settings
+INVOICE_PREFIX = 'INV-'
+INVOICE_DUE_DAYS = 7
+
+# Withdrawal Settings
+WITHDRAWAL_MIN_AMOUNT = 10000  # TZS 10,000 minimum
+WITHDRAWAL_MAX_AMOUNT = 5000000  # TZS 5,000,000 maximum per transaction
+WITHDRAWAL_DAILY_LIMIT = 10000000  # TZS 10,000,000 per day
+
+# Email Settings for Payments
+PAYMENT_EMAIL_SENDER = 'noreply@freelancemarket.com'
+PAYMENT_EMAIL_SUBJECTS = {
+    'payment_received': 'Payment Received - {amount} {currency}',
+    'withdrawal_request': 'Withdrawal Request - {amount} {currency}',
+    'withdrawal_approved': 'Withdrawal Approved - {amount} {currency}',
+    'withdrawal_rejected': 'Withdrawal Rejected - {amount} {currency}',
+    'invoice_generated': 'New Invoice #{invoice_number} - {amount} {currency}',
+    'payment_reminder': 'Payment Reminder - Invoice #{invoice_number}',
+}
+
+# Currency Settings
+CURRENCIES = {
+    'TZS': {
+        'name': 'Tanzanian Shilling',
+        'symbol': 'TSh',
+        'decimal_places': 0,
+        'symbol_position': 'left',
+        'thousand_separator': ',',
+        'decimal_separator': '.',
+    },
+    'USD': {
+        'name': 'US Dollar',
+        'symbol': '$',
+        'decimal_places': 2,
+        'symbol_position': 'left',
+        'thousand_separator': ',',
+        'decimal_separator': '.',
+    },
+    'EUR': {
+        'name': 'Euro',
+        'symbol': '€',
+        'decimal_places': 2,
+        'symbol_position': 'right',
+        'thousand_separator': '.',
+        'decimal_separator': ',',
+    },
+}
+
+# Exchange Rates (example rates, should be updated from a reliable source)
+EXCHANGE_RATES = {
+    'USD': 1.0,
+    'EUR': 0.85,
+    'TZS': 2300.0,  # Example rate, should be updated
+}
+
+# Payment Session Settings
+PAYMENT_SESSION_TIMEOUT = 3600  # 1 hour in seconds
+
 LOGIN_REDIRECT_URL = 'dashboard:home'
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'home:home_page'
