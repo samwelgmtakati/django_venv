@@ -1,7 +1,6 @@
 # Render Blueprint for Freelance Market
 # Reference: https://render.com/docs/blueprint-spec
 
-# PostgreSQL database
 services:
   - type: web
     name: freelance-market
@@ -23,19 +22,27 @@ services:
         value: false
       - key: DISABLE_COLLECTSTATIC
         value: 1
-    database:
-      name: freelance_market_db
-      databaseName: freelance_market
-      user: freelance_market_user
+      - key: DB_ENGINE
+        value: mysql
+      - key: DB_NAME
+        value: freelance_market
+      - key: DB_USER
+        value: freelance_user
+      - key: DB_PASSWORD
+        generateValue: true
+      - key: DB_HOST
+        value: ${MYSQLHOST}
+      - key: DB_PORT
+        value: ${MYSQLPORT}
     plan: free
     autoDeploy: true
 
-  # PostgreSQL database
-  - type: postgres
+  # MySQL database
+  - type: mysql
     name: freelance-market-db
     plan: free
     databaseName: freelance_market
-    user: freelance_market_user
+    user: freelance_user
     ipAllowList: []
     # Uncomment the following line to enable external connections
     # allowAllExternalConnections: true

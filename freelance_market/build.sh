@@ -2,6 +2,21 @@
 # Exit on error
 set -o errexit
 
+# Install system dependencies for MySQL client
+if [ -f /etc/debian_version ]; then
+    # Debian/Ubuntu
+    apt-get update && apt-get install -y \
+        default-libmysqlclient-dev \
+        python3-dev \
+        python3-pip
+elif [ -f /etc/redhat-release ]; then
+    # RHEL/CentOS
+    yum install -y \
+        mysql-devel \
+        python3-devel \
+        python3-pip
+fi
+
 # Install Python version (if pyenv is available)
 if command -v pyenv &> /dev/null; then
     pyenv install -s 3.12.3
