@@ -5,9 +5,9 @@
 {% block title %}{{ form_title|default:'Add Payment Method' }} - Payments{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid py-3 py-lg-4">
     <div class="row justify-content-center">
-        <div class="col-lg-10">
+        <div class="col-12 col-xl-10">
             <!-- Page Header -->
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb mb-0">
@@ -71,20 +71,41 @@
 
                         <div class="row g-4">
                             <!-- Left Column -->
-                            <div class="col-lg-8">
+                            <div class="col-lg-7">
                                 <div class="mb-4">
                                     <h5 class="mb-3">Payment Method Details</h5>
                                     
                                     <!-- Payment Method Type -->
                                     <div class="mb-4">
-                                        <label for="id_name" class="form-label fw-medium">Payment Method Type <span class="text-danger">*</span></label>
-                                        {{ form.name }}
-                                        <div class="form-text">Select the type of payment method you want to add.</div>
+                                        <label for="id_name" class="form-label fw-medium mb-3">Select Payment Method <span class="text-danger">*</span></label>
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <input type="radio" class="btn-check" name="name" id="bank-account" value="bank_account" autocomplete="off" {% if form.name.value == 'bank_account' %}checked{% endif %}>
+                                                <label class="btn btn-outline-primary w-100 p-3 d-flex flex-column align-items-center h-100" for="bank-account">
+                                                    <i class="bi bi-bank fs-1 mb-2"></i>
+                                                    <span>Bank Account</span>
+                                                </label>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="radio" class="btn-check" name="name" id="azampesa" value="azampesa" autocomplete="off" {% if form.name.value == 'azampesa' %}checked{% endif %}>
+                                                <label class="btn btn-outline-primary w-100 p-3 d-flex flex-column align-items-center h-100" for="azampesa">
+                                                    <i class="bi bi-phone fs-1 mb-2"></i>
+                                                    <span>AzamPesa</span>
+                                                    <small class="text-muted mt-1">Fast & Secure</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="form-text">Select your preferred payment method to continue.</div>
                                         {% if form.name.errors %}
                                             <div class="invalid-feedback d-block">
                                                 {{ form.name.errors.0 }}
                                             </div>
                                         {% endif %}
+                                        <!-- Hidden select element for form submission -->
+                                        <select name="name" id="id_name" class="d-none">
+                                            <option value="bank_account" {% if form.name.value == 'bank_account' %}selected{% endif %}>Bank Account</option>
+                                            <option value="azampesa" {% if form.name.value == 'azampesa' %}selected{% endif %}>AzamPesa</option>
+                                        </select>
                                     </div>
 
                                     <!-- Dynamic Fields Container -->
@@ -186,8 +207,68 @@
                             </div>
 
                             <!-- Right Column -->
-                            <div class="col-lg-4">
+                            <div class="col-lg-5">
                                 <!-- Payment Method Preview -->
+                                <div class="card border-0 shadow-sm h-100">
+                                    <div class="card-body p-3 p-lg-4">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0 me-3">
+                                                <i class="bi bi-credit-card fs-2 text-primary"></i>
+                                            </div>
+                                            <div class="flex-grow-1 text-start">
+                                                <h5 class="mb-1" id="preview-title">Payment Method</h5>
+                                                <p class="text-muted small mb-0" id="preview-description">Select a payment method to see details</p>
+                                            </div>
+                                        </div>
+                                        <div class="row g-2 mt-3">
+                                            <div class="col-6">
+                                                <div class="d-flex align-items-center p-2 bg-light rounded">
+                                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                    <span class="small">Secure</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="d-flex align-items-center p-2 bg-light rounded">
+                                                    <i class="bi bi-shield-lock-fill text-primary me-2"></i>
+                                                    <span class="small">Encrypted</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="d-flex align-items-center p-2 bg-light rounded">
+                                                    <i class="bi bi-lightning-fill text-warning me-2"></i>
+                                                    <span class="small">Fast</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="d-flex align-items-center p-2 bg-light rounded">
+                                                    <i class="bi bi-cash-coin text-success me-2"></i>
+                                                    <span class="small">No Fees</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <h6 class="mb-3 d-flex align-items-center">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <span>Why add a payment method?</span>
+                                    </h6>
+                                    <ul class="list-unstyled small">
+                                        <li class="mb-2 d-flex">
+                                            <i class="bi bi-check2-circle text-primary me-2 mt-1"></i>
+                                            <span>Faster checkout for future purchases</span>
+                                        </li>
+                                        <li class="mb-2 d-flex">
+                                            <i class="bi bi-check2-circle text-primary me-2 mt-1"></i>
+                                            <span>Securely store payment details</span>
+                                        </li>
+                                        <li class="d-flex">
+                                            <i class="bi bi-check2-circle text-primary me-2 mt-1"></i>
+                                            <span>Easy management of payment options</span>
+                                        </li>
+                                    </ul>
+                                </div>
                                 <div class="card bg-light border-0 mb-4">
                                     <div class="card-body">
                                         <h6 class="mb-3"><i class="bi bi-credit-card me-2"></i> Preview</h6>
@@ -382,23 +463,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get description for payment method
     function getPaymentMethodDescription(type) {
         const descriptions = {
-            'bank': 'Bank account for direct transfers',
-            'azampesa': 'Mobile money via AzamPesa',
-            'mpesa': 'Mobile money via M-Pesa',
-            'tigopesa': 'Mobile money via Tigo Pesa',
-            'halopesa': 'Mobile money via HaloPesa',
-            'paypal': 'Pay with PayPal account',
+            'bank_account': 'Bank account for direct transfers',
+            'azampesa': 'AzamPesa for instant mobile payments',
             'card': 'Credit or debit card payments'
         };
         return descriptions[type] || 'Secure payment method';
     }
     
-    // Initialize
-    if (paymentMethodType) {
-        paymentMethodType.addEventListener('change', toggleFields);
-        // Initial toggle
+    // Update hidden select when radio buttons change
+    document.querySelectorAll('input[name="name"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('id_name').value = this.value;
+            toggleFields();
+            updatePreview(this.value);
+        });
+    });
+    
+    // Update radio buttons when hidden select changes (form validation)
+    document.getElementById('id_name').addEventListener('change', function() {
+        const radio = document.querySelector(`input[name="name"][value="${this.value}"]`);
+        if (radio) radio.checked = true;
         toggleFields();
-    }
+        updatePreview(this.value);
+    });
+    
+    // Initialize
+    toggleFields();
+    updatePreview(document.querySelector('input[name="name"]:checked')?.value || '');
 });
 </script>
 {% endblock %}
