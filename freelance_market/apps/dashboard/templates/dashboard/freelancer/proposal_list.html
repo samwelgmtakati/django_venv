@@ -138,11 +138,11 @@
                                                         {{ proposal.get_status_display }}
                                                     </span>
                                                     <span class="text-muted small">
-                                                        <i class="fas fa-dollar-sign me-1"></i> TZS
+                                                        <i class="fas fa-dollar-sign me-1"></i>
                                                         {% if proposal.job.job_type == 'fixed' %}
-                                                            TZS {{ proposal.bid_amount|floatformat:2 }} Fixed Price
+                                                            TZS {{ proposal.bid_amount|floatformat:2|intcomma }} Fixed Price
                                                         {% else %}
-                                                            TZS {{ proposal.bid_amount|floatformat:2 }}/hr
+                                                            TZS {{ proposal.bid_amount|floatformat:2|intcomma }}/hr
                                                         {% endif %}
                                                     </span>
                                                     {% if proposal.estimated_days %}

@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Q
 from django.conf import settings
 from django.contrib import messages
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
@@ -403,6 +404,10 @@ class OrderReviewCreateView(LoginRequiredMixin, FormView):
         kwargs['order'] = self.order
         return kwargs
 
+    def get_success_url(self):
+        """Return the URL to redirect to after processing a valid form."""
+        return reverse('orders:detail', kwargs={'pk': self.order.pk})
+        
     def form_valid(self, form):
         import logging
         logger = logging.getLogger(__name__)
@@ -415,7 +420,7 @@ class OrderReviewCreateView(LoginRequiredMixin, FormView):
         if Review.objects.filter(order=self.order, reviewer=self.user).exists():
             logger.warning(f"User {self.user} already has a review for order {self.order.id}")
             messages.warning(self.request, "You have already submitted a review for this order.")
-            return redirect("orders:detail", pk=self.order.pk)
+            return redirect(self.get_success_url())
             
         try:
             review = form.save(commit=False)
@@ -443,10 +448,8 @@ class OrderReviewCreateView(LoginRequiredMixin, FormView):
             
             messages.success(self.request, "Thank you for your review!")
             
-            # Ensure we're redirecting to the order detail page
-            redirect_url = reverse("orders:detail", kwargs={"pk": self.order.pk})
-            logger.info(f"Redirecting to {redirect_url}")
-            return redirect(redirect_url)
+            logger.info("Review saved successfully, redirecting...")
+            return super().form_valid(form)
             
         except Exception as e:
             logger.error(f"Error saving review: {str(e)}", exc_info=True)
@@ -455,10 +458,34 @@ class OrderReviewCreateView(LoginRequiredMixin, FormView):
     
     def form_invalid(self, form):
         logger = logging.getLogger(__name__)
-        logger.warning("Form is invalid")
+        logger.warning("Form is invalid. Errors: %s", form.errors)
+        
+        # Log form data for debugging
+        logger.info("Form data: %s", form.data)
+        logger.info("Form files: %s", form.files)
+        
+        # Log each field's value and errors
+        for field_name, field in form.fields.items():
+            logger.info("Field %s value: %s", field_name, form[field_name].value())
+            if field_name in form.errors:
+                logger.error("Field %s errors: %s", field_name, form.errors[field_name])
+        
+        # Show errors to user
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(self.request, f"{field}: {error}")
+                
+        # Add debug information for JavaScript
+        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'error',
+                'errors': form.errors,
+                'debug': {
+                    'form_data': dict(form.data),
+                    'cleaned_data': getattr(form, 'cleaned_data', {})
+                }
+            }, status=400)
+            
         return self.render_to_response(self.get_context_data(form=form))
 
     def get_context_data(self, **kwargs):

@@ -87,15 +87,14 @@ class OrderReviewForm(forms.ModelForm):
         # Determine if we're reviewing a freelancer or client
         self.reviewing_freelancer = (self.user == self.order.client)
         
-        # Add the main rating field (required)
+        # Make the main rating optional for testing detailed ratings
         self.fields['rating'] = forms.ChoiceField(
-            label=_('Overall Rating'),
+            label=_('Overall Rating (Optional)'),
             choices=[('', _('Select rating...'))] + [(str(i), str(i)) for i in range(1, 6)],
-            widget=forms.HiddenInput(attrs={'required': 'required'}),
-            required=True,
-            error_messages={
-                'required': _('Please select a rating'),
-            }
+            widget=forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            required=False
         )
         
         # Add appropriate rating fields based on who is being reviewed
@@ -106,12 +105,16 @@ class OrderReviewForm(forms.ModelForm):
     
     def _add_freelancer_rating_fields(self):
         """Add rating fields specific to freelancer reviews."""
-        # Overall rating (required)
+        # Overall rating (optional)
         self.fields['rating'] = forms.ChoiceField(
-            label=_('Overall Rating'),
-            choices=self.RATING_CHOICES,
-            widget=forms.Select(attrs={'class': 'form-select'}),
-            required=True
+            label=_('Overall Rating (Optional)'),
+            choices=[('', _('Select rating...'))] + list(self.RATING_CHOICES),
+            widget=forms.Select(attrs={
+                'class': 'form-select',
+                'aria-label': 'Overall rating (optional)'
+            }),
+            required=False,
+            initial=''
         )
         
         # Detailed ratings (optional)
@@ -140,14 +143,47 @@ class OrderReviewForm(forms.ModelForm):
             required=False
         )
     
+    def clean(self):
+        """Custom form validation and debugging."""
+        cleaned_data = super().clean()
+        
+        # Debug: Log form data
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("Form cleaned data: %s", cleaned_data)
+        
+        # Debug: Log all POST data
+        logger.info("Raw POST data: %s", self.data)
+        
+        # Get all possible rating fields based on who is being reviewed
+        if self.reviewing_freelancer:
+            rating_fields = ['rating', 'quality_rating', 'communication_rating', 
+                           'deadline_rating', 'professionalism_rating']
+        else:
+            rating_fields = ['rating', 'clarity_rating', 'responsiveness_rating', 'payment_rating']
+        
+        # Check if at least one rating field has a value
+        has_rating = any(cleaned_data.get(field) for field in rating_fields if field in cleaned_data)
+        
+        if not has_rating:
+            logger.error("No rating provided")
+            self.add_error(None, _('Please provide at least one rating'))
+        
+        return cleaned_data
+        
     def _add_client_rating_fields(self):
         """Add rating fields specific to client reviews."""
-        # Overall rating (required)
+        # Overall rating (optional)
         self.fields['rating'] = forms.ChoiceField(
-            label=_('Overall Rating'),
-            choices=self.RATING_CHOICES,
-            widget=forms.Select(attrs={'class': 'form-select'}),
-            required=True
+            label=_('Overall Rating (Optional)'),
+            choices=[('', _('Select rating...'))] + list(self.RATING_CHOICES),
+            widget=forms.Select(attrs={
+                'class': 'form-select',
+                'aria-label': 'Overall rating (optional)',
+                'id': 'id_rating_dropdown'  # Keep ID for JavaScript targeting
+            }),
+            required=False,
+            initial=''
         )
         
         # Detailed ratings (optional)
@@ -204,15 +240,29 @@ class OrderReviewForm(forms.ModelForm):
         return cleaned_data
     
     def save(self, commit=True):
-        review = super().save(commit=False)
-        # Set the reviewer and reviewed user
-        review.reviewer = self.user
-        review.order = self.order  # Make sure to set the order
-        review.user_being_reviewed = self.order.freelancer if self.reviewing_freelancer else self.order.client
-        review.is_client_review = self.reviewing_freelancer
+        """Save the review instance."""
+        from apps.reviews.models import Review
         
-        # Set the overall rating (should be validated by clean())
-        review.rating = self.cleaned_data['rating']
+        # Create a new review instance but don't save it yet
+        review = Review()
+        
+        # Set the required fields
+        review.order = self.order
+        review.reviewer = self.user
+        
+        # Set the user being reviewed and review type
+        if self.reviewing_freelancer:
+            review.user_being_reviewed = self.order.freelancer
+            review.is_client_review = True
+        else:
+            review.user_being_reviewed = self.order.client
+            review.is_client_review = False
+        
+        # Set the comment if provided
+        review.comment = self.cleaned_data.get('comment', '')
+        
+        # Set the overall rating (validated in clean())
+        review.rating = int(self.cleaned_data['rating'])
         
         # Set detailed ratings if provided
         rating_fields = [
@@ -228,11 +278,24 @@ class OrderReviewForm(forms.ModelForm):
                     # Skip invalid values
                     pass
         
+        # Set default values for required fields
+        if not hasattr(review, 'is_verified'):
+            review.is_verified = False
+        
+        if not hasattr(review, 'is_public'):
+            review.is_public = True
+        
         if commit:
-            review.save()
-            # Update the user's average rating
-            from apps.reviews.models import update_user_rating
-            update_user_rating(review.user_being_reviewed)
+            try:
+                review.save()
+                # Update the user's average rating
+                from apps.reviews.models import update_user_rating
+                update_user_rating(review.user_being_reviewed)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error saving review: {str(e)}", exc_info=True)
+                raise
         
         return review
 

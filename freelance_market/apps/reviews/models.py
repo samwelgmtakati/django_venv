@@ -51,7 +51,10 @@ class Review(models.Model):
     rating = models.PositiveSmallIntegerField(
         _('overall rating'),
         choices=RATING_CHOICES,
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        null=True,
+        blank=True,
+        help_text=_('Overall rating (optional if detailed ratings are provided)')
     )
     comment = models.TextField(_('comment'), blank=True, null=True)
     

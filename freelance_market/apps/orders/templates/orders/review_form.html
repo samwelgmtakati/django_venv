@@ -1,5 +1,56 @@
 {% extends "dashboard/base.html" %}
+{% load i18n widget_tweaks %}
+
 {% block title %}Leave Review{% endblock title %}
+
+{% block extra_css %}
+<style>
+/* Star Rating Styles */
+.star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+}
+
+.star-rating input[type="radio"] {
+    display: none;
+}
+
+.star-rating label {
+    font-size: 1.5rem;
+    color: #ddd;
+    cursor: pointer;
+    padding: 0 0.15rem;
+    transition: color 0.2s;
+}
+
+.star-rating label:hover,
+.star-rating label.active,
+.star-rating input[type="radio"]:checked ~ label {
+    color: #ffc107;
+}
+
+.star-rating label:hover ~ label,
+.star-rating input[type="radio"]:checked ~ label ~ label {
+    color: #ffc107;
+}
+
+.star-rating label::before {
+    content: '★';
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    line-height: 1.5rem;
+    text-align: center;
+}
+
+.star-rating label:focus {
+    outline: 2px solid #0d6efd;
+    border-radius: 0.25rem;
+}
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -10,7 +61,7 @@
                     <h2 class="mb-0">Leave a Review for Order #{{ order.id }}</h2>
                 </div>
                 <div class="card-body">
-                    <form method="post" action="{% url 'orders:review' order.id %}">
+                    <form method="post" action="{% url 'orders:review' order.id %}" id="reviewForm">
                         {% csrf_token %}
                         
                         {% if form.non_field_errors %}
@@ -21,146 +72,171 @@
                             </div>
                         {% endif %}
                         
-                        <!-- Overall Rating -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Overall Rating *</label>
-                            {{ form.rating }}
-                            <div class="star-rating">
-                                {% for i in "54321" %}
-                                    <input type="radio" id="star{{ i }}" name="rating_display" value="{{ i }}" 
-                                           {% if form.rating.value == i or form.rating.value|stringformat:'s' == i %}checked{% endif %}>
-                                    <label for="star{{ i }}" class="bi bi-star-fill"></label>
-                                {% endfor %}
-                                {% if form.rating.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.rating.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
+                        <!-- Hidden field for overall rating (kept for backward compatibility) -->
+                        <input type="hidden" name="rating" id="id_rating" value="">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Please provide ratings for the following categories:
                         </div>
-                        
-                        <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const hiddenInput = document.getElementById('{{ form.rating.id_for_label }}');
-                            const radioInputs = document.querySelectorAll('input[type="radio"][name="rating_display"]');
-                            
-                            radioInputs.forEach(radio => {
-                                radio.addEventListener('change', function() {
-                                    hiddenInput.value = this.value;
-                                });
-                            });
-                            
-                            // Initialize with existing value if any
-                            if (hiddenInput.value) {
-                                const selectedRadio = document.querySelector(`input[type="radio"][name="rating_display"][value="${hiddenInput.value}"]`);
-                                if (selectedRadio) {
-                                    selectedRadio.checked = true;
-                                }
-                            }
-                        });
-                        </script>
                         
                         <!-- Detailed Ratings -->
                         {% if reviewing_freelancer %}
                             <!-- Freelancer-specific ratings -->
                             <div class="mb-4">
-                                <h5>Detailed Ratings (Optional)</h5>
+                                <h5>Rate the Freelancer</h5>
                                 
-                                <div class="mb-3">
-                                    <label class="form-label">Quality of Work</label>
-                                    <select name="quality_rating" class="form-select">
-                                        <option value="">Select rating...</option>
+                                <!-- Quality Rating -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Quality of Work *</label>
+                                    <div class="star-rating" id="quality_rating_container">
                                         {% for value, label in form.fields.quality_rating.choices %}
-                                            <option value="{{ value }}" {% if form.quality_rating.value == value|stringformat:'s' %}selected{% endif %}>
-                                                {{ label }}
-                                            </option>
+                                            {% if value %}
+                                                <input type="radio" id="quality_rating_{{ value }}" name="quality_rating" value="{{ value }}" 
+                                                       {% if form.quality_rating.value|stringformat:"s" == value|stringformat:"s" %}checked{% endif %}>
+                                                <label for="quality_rating_{{ value }}" title="{{ label }}" data-value="{{ value }}"></label>
+                                            {% endif %}
                                         {% endfor %}
-                                    </select>
+                                    </div>
+                                    {% if form.quality_rating.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.quality_rating.errors.0 }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label class="form-label">Communication</label>
-                                    <select name="communication_rating" class="form-select">
-                                        <option value="">Select rating...</option>
+                                <!-- Communication Rating -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Communication *</label>
+                                    <div class="star-rating" id="communication_rating_container">
                                         {% for value, label in form.fields.communication_rating.choices %}
-                                            <option value="{{ value }}" {% if form.communication_rating.value == value|stringformat:'s' %}selected{% endif %}>
-                                                {{ label }}
-                                            </option>
+                                            {% if value %}
+                                                <input type="radio" id="communication_rating_{{ value }}" name="communication_rating" value="{{ value }}"
+                                                       {% if form.communication_rating.value|stringformat:"s" == value|stringformat:"s" %}checked{% endif %}>
+                                                <label for="communication_rating_{{ value }}" title="{{ label }}" data-value="{{ value }}"></label>
+                                            {% endif %}
                                         {% endfor %}
-                                    </select>
+                                    </div>
+                                    {% if form.communication_rating.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.communication_rating.errors.0 }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label class="form-label">Meeting Deadlines</label>
-                                    <select name="deadline_rating" class="form-select">
-                                        <option value="">Select rating...</option>
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Meeting Deadlines *</label>
+                                    <div class="star-rating">
                                         {% for value, label in form.fields.deadline_rating.choices %}
-                                            <option value="{{ value }}" {% if form.deadline_rating.value == value|stringformat:'s' %}selected{% endif %}>
-                                                {{ label }}
-                                            </option>
+                                            {% if value %}
+                                                <input type="radio" 
+                                                       id="deadline_rating_{{ value }}" 
+                                                       name="deadline_rating" 
+                                                       value="{{ value }}" 
+                                                       class="d-none"
+                                                       {% if form.deadline_rating.value == value|stringformat:'s' %}checked{% endif %}>
+                                                <label for="deadline_rating_{{ value }}" class="bi bi-star-fill"></label>
+                                            {% endif %}
                                         {% endfor %}
-                                    </select>
+                                    </div>
+                                    {% if form.deadline_rating.errors %}
+                                        <div class="text-danger small mt-1">{{ form.deadline_rating.errors.0 }}</div>
+                                    {% endif %}
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label class="form-label">Professionalism</label>
-                                    <select name="professionalism_rating" class="form-select">
-                                        <option value="">Select rating...</option>
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Professionalism *</label>
+                                    <div class="star-rating">
                                         {% for value, label in form.fields.professionalism_rating.choices %}
-                                            <option value="{{ value }}" {% if form.professionalism_rating.value == value|stringformat:'s' %}selected{% endif %}>
-                                                {{ label }}
-                                            </option>
+                                            {% if value %}
+                                                <input type="radio" 
+                                                       id="professionalism_rating_{{ value }}" 
+                                                       name="professionalism_rating" 
+                                                       value="{{ value }}" 
+                                                       class="d-none"
+                                                       {% if form.professionalism_rating.value == value|stringformat:'s' %}checked{% endif %}>
+                                                <label for="professionalism_rating_{{ value }}" class="bi bi-star-fill"></label>
+                                            {% endif %}
                                         {% endfor %}
-                                    </select>
+                                    </div>
+                                    {% if form.professionalism_rating.errors %}
+                                        <div class="text-danger small mt-1">{{ form.professionalism_rating.errors.0 }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
                         {% else %}
                             <!-- Client-specific ratings -->
                             <div class="mb-4">
-                                <h5>Detailed Ratings (Optional)</h5>
+                                <h5>Rate the Client</h5>
                                 
-                                <div class="mb-3">
-                                    <label class="form-label">Clarity of Requirements</label>
-                                    <select name="clarity_rating" class="form-select">
-                                        <option value="">Select rating...</option>
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Clarity of Requirements *</label>
+                                    <div class="star-rating">
                                         {% for value, label in form.fields.clarity_rating.choices %}
-                                            <option value="{{ value }}" {% if form.clarity_rating.value == value|stringformat:'s' %}selected{% endif %}>
-                                                {{ label }}
-                                            </option>
+                                            {% if value %}
+                                                <input type="radio" 
+                                                       id="clarity_rating_{{ value }}" 
+                                                       name="clarity_rating" 
+                                                       value="{{ value }}" 
+                                                       class="d-none"
+                                                       {% if form.clarity_rating.value == value|stringformat:'s' %}checked{% endif %}>
+                                                <label for="clarity_rating_{{ value }}" class="bi bi-star-fill"></label>
+                                            {% endif %}
                                         {% endfor %}
-                                    </select>
+                                    </div>
+                                    {% if form.clarity_rating.errors %}
+                                        <div class="text-danger small mt-1">{{ form.clarity_rating.errors.0 }}</div>
+                                    {% endif %}
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label class="form-label">Responsiveness</label>
-                                    <select name="responsiveness_rating" class="form-select">
-                                        <option value="">Select rating...</option>
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Responsiveness *</label>
+                                    <div class="star-rating">
                                         {% for value, label in form.fields.responsiveness_rating.choices %}
-                                            <option value="{{ value }}" {% if form.responsiveness_rating.value == value|stringformat:'s' %}selected{% endif %}>
-                                                {{ label }}
-                                            </option>
+                                            {% if value %}
+                                                <input type="radio" 
+                                                       id="responsiveness_rating_{{ value }}" 
+                                                       name="responsiveness_rating" 
+                                                       value="{{ value }}" 
+                                                       class="d-none"
+                                                       {% if form.responsiveness_rating.value == value|stringformat:'s' %}checked{% endif %}>
+                                                <label for="responsiveness_rating_{{ value }}" class="bi bi-star-fill"></label>
+                                            {% endif %}
                                         {% endfor %}
-                                    </select>
+                                    </div>
+                                    {% if form.responsiveness_rating.errors %}
+                                        <div class="text-danger small mt-1">{{ form.responsiveness_rating.errors.0 }}</div>
+                                    {% endif %}
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label class="form-label">Timely Payment</label>
-                                    <select name="payment_rating" class="form-select">
-                                        <option value="">Select rating...</option>
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Payment Promptness *</label>
+                                    <div class="star-rating">
                                         {% for value, label in form.fields.payment_rating.choices %}
-                                            <option value="{{ value }}" {% if form.payment_rating.value == value|stringformat:'s' %}selected{% endif %}>
-                                                {{ label }}
-                                            </option>
+                                            {% if value %}
+                                                <input type="radio" 
+                                                       id="payment_rating_{{ value }}" 
+                                                       name="payment_rating" 
+                                                       value="{{ value }}" 
+                                                       class="d-none"
+                                                       {% if form.payment_rating.value == value|stringformat:'s' %}checked{% endif %}>
+                                                <label for="payment_rating_{{ value }}" class="bi bi-star-fill"></label>
+                                            {% endif %}
                                         {% endfor %}
-                                    </select>
+                                    </div>
+                                    {% if form.payment_rating.errors %}
+                                        <div class="text-danger small mt-1">{{ form.payment_rating.errors.0 }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
                         {% endif %}
                         
                         <!-- Comment -->
                         <div class="mb-4">
-                            <label class="form-label fw-bold">Your Review</label>
-                            {{ form.comment }}
+                            <label for="{{ form.comment.id_for_label }}" class="form-label fw-bold">{{ form.comment.label }}</label>
+                            {{ form.comment|attr:"class:form-control" }}
+                            {% if form.comment.help_text %}
+                                <div class="form-text">{{ form.comment.help_text }}</div>
+                            {% endif %}
                             {% if form.comment.errors %}
                                 <div class="invalid-feedback d-block">
                                     {{ form.comment.errors.0 }}
@@ -184,49 +260,111 @@
     </div>
 </div>
 
-<style>
-.star-rating {
-    direction: rtl;
-    unicode-bidi: bidi-override;
-    display: inline-block;
-    font-size: 1.75rem;
-    line-height: 1;
-    padding: 0;
-    margin: 0 0 1rem 0;
-}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to update star rating UI
+    function updateStarRating(container, value) {
+        const stars = container.querySelectorAll('label');
+        stars.forEach(star => {
+            const starValue = parseInt(star.getAttribute('data-value'));
+            if (starValue <= value) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+        
+        // Update the hidden overall rating with the average of all ratings
+        updateOverallRating();
+    }
+    
+    // Function to calculate and update the overall rating
+    function updateOverallRating() {
+        const ratingFields = [
+            'quality_rating', 'communication_rating', 'deadline_rating',
+            'professionalism_rating', 'clarity_rating', 'responsiveness_rating', 'payment_rating'
+        ];
+        
+        let total = 0;
+        let count = 0;
+        
+        ratingFields.forEach(field => {
+            const input = document.querySelector(`input[name="${field}"]:checked`);
+            if (input) {
+                total += parseInt(input.value);
+                count++;
+            }
+        });
+        
+        // Update the hidden rating field with the average (rounded to nearest integer)
+        const overallRating = count > 0 ? Math.round(total / count) : 0;
+        document.getElementById('id_rating').value = overallRating;
+    }
+    
+    // Initialize all star ratings
+    document.querySelectorAll('.star-rating').forEach(container => {
+        const inputs = container.querySelectorAll('input[type="radio"]');
+        const labels = container.querySelectorAll('label');
+        
+        // Add hover effect
+        labels.forEach(label => {
+            label.addEventListener('mouseover', function() {
+                const value = parseInt(this.getAttribute('data-value'));
+                updateStarRating(container, value);
+            });
+            
+            label.addEventListener('mouseout', function() {
+                const checkedInput = container.querySelector('input[type="radio"]:checked');
+                if (checkedInput) {
+                    updateStarRating(container, parseInt(checkedInput.value));
+                } else {
+                    updateStarRating(container, 0);
+                }
+            });
+            
+            // Click handler
+            label.addEventListener('click', function() {
+                const input = document.getElementById(this.getAttribute('for'));
+                if (input) {
+                    input.checked = true;
+                    updateStarRating(container, parseInt(input.value));
+                }
+            });
+        });
+        
+        // Initialize with current value
+        const checkedInput = container.querySelector('input[type="radio"]:checked');
+        if (checkedInput) {
+            updateStarRating(container, parseInt(checkedInput.value));
+        }
+    });
+    
+    // Form submission validation
+    const form = document.getElementById('reviewForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Check if at least one rating is provided
+            const ratingFields = [
+                'quality_rating', 'communication_rating', 'deadline_rating',
+                'professionalism_rating', 'clarity_rating', 'responsiveness_rating', 'payment_rating'
+            ];
+            
+            const hasRating = ratingFields.some(field => {
+                return document.querySelector(`input[name="${field}"]:checked`) !== null;
+            });
+            
+            if (!hasRating) {
+                e.preventDefault();
+                alert('Please provide at least one rating before submitting.');
+                return false;
+            }
+            
+            return true;
+        });
+    }
+});
+</script>
+{% endblock extra_js %}
 
-.star-rating input {
-    display: none;
-}
-
-.star-rating label {
-    color: #d3d3d3;
-    cursor: pointer;
-    float: right;
-    padding: 0 5px;
-    margin: 0;
-    transition: color 0.2s;
-}
-
-.star-rating label:hover,
-.star-rating label:hover ~ label,
-.star-rating input:checked ~ label {
-    color: #ffc107;
-}
-
-.star-rating input:checked ~ label:hover,
-.star-rating input:checked ~ label:hover ~ label {
-    color: #ffd700;
-}
-
-/* Style for select dropdowns */
-.form-select {
-    max-width: 300px;
-}
-
-/* Make the comment textarea larger */
-textarea.form-control {
-    min-height: 120px;
-}
-</style>
 {% endblock content %}
